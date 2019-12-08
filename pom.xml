@@ -15,7 +15,9 @@
 	<description>Demo project for Spring Boot</description>
 
 	<properties>
-		<java.version>1.8</java.version>
+		<java.version>13</java.version>
+		<telegrambots.version>4.4.0.2</telegrambots.version>
+		<reactor-extra.version>3.3.1.RELEASE</reactor-extra.version>
 	</properties>
 
 	<dependencies>
@@ -45,6 +47,19 @@
 			<artifactId>reactor-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>org.telegram</groupId>
+			<artifactId>telegrambots</artifactId>
+			<version>${telegrambots.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/io.projectreactor.addons/reactor-extra -->
+		<dependency>
+			<groupId>io.projectreactor.addons</groupId>
+			<artifactId>reactor-extra</artifactId>
+			<version>${reactor-extra.version}</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>

@@ -1,0 +1,11 @@
+spring:
+  application:
+    name:
+      TelegranLoader
+
+telegram:
+  bot:
+    username: telegranLoaderBot
+    token:
+    #path: null
+  ownertelegramid:
