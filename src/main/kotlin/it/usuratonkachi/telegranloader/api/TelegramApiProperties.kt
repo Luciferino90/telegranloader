@@ -1,9 +1,7 @@
 package it.usuratonkachi.telegranloader.api
 
-import com.github.badoualy.telegram.api.TelegramApp
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
-import javax.annotation.PostConstruct
 
 @Configuration
 @ConfigurationProperties(prefix = "telegram.api", ignoreUnknownFields = false)

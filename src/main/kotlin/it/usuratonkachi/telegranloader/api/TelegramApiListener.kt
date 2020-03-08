@@ -9,8 +9,8 @@ import it.usuratonkachi.telegranloader.config.AnsweringBot
 import it.usuratonkachi.telegranloader.config.TelegramCommonProperties
 import it.usuratonkachi.telegranloader.parser.ParserService
 import org.springframework.stereotype.Component
-import java.io.File
 import java.io.FileOutputStream
+import java.nio.file.Path
 
 @Component
 class TelegramApiListener(
@@ -36,18 +36,18 @@ class TelegramApiListener(
                 .toList()
     }
 
-    private fun getFilename(media: TLMessageMediaDocument): String {
+    private fun getFilename(media: TLMessageMediaDocument): Path {
         val filename = media.document.asDocument.attributes
                 .stream()
                 .map { it as TLDocumentAttributeFilename }
                 .map { it.fileName as String }
                 .findFirst()
                 .orElseThrow { RuntimeException("No filename found!") }
-        return parserService.getEpisodeWrapper(filename).toString()
+        return parserService.getEpisodeWrapper(filename)
     }
 
-    fun download(client: TelegramClient, media: TLMessageMediaDocument, filename: String) {
-        val outputFile = File("/tmp", filename)
+    fun download(client: TelegramClient, media: TLMessageMediaDocument, outputPath: Path) {
+        val outputFile = outputPath.toFile()
         if (outputFile.exists()) {
             if (outputFile.length() != media.getAbsMediaInput()!!.size.toLong()) {
                 println("Deleted uncompleted download file @" + outputFile.absolutePath)
@@ -57,7 +57,8 @@ class TelegramApiListener(
                 return
             }
         }
-        val fos = FileOutputStream(File("/tmp", filename))
+        val fos = FileOutputStream(outputFile)
+        outputPath.parent.toFile().mkdirs()
         client.downloadSync(media.getAbsMediaInput()!!.inputFileLocation, media.getAbsMediaInput()!!.size, fos)
     }
 
