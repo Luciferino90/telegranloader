@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: TelegranLoader
+
+telegram:
+  common:
+    downloadpath: /tmp
+    owners:
+      - 0
+      - 1
+  api:
+    api_id: 0
+    api_hash: 012345
+    app_version: 1.0
+    model: Model
+    system_version: SysVer
+    language_code: en
+    phone_number: +000000000000
+  bot:
+    username: telegranLoaderBot
+    token: 0123456:asbcdefghijkl
+    chatid: 0123345
