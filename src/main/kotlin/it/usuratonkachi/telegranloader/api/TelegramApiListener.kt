@@ -57,8 +57,8 @@ class TelegramApiListener(
                 return
             }
         }
-        val fos = FileOutputStream(outputFile)
         outputPath.parent.toFile().mkdirs()
+        val fos = FileOutputStream(outputFile)
         client.downloadSync(media.getAbsMediaInput()!!.inputFileLocation, media.getAbsMediaInput()!!.size, fos)
     }
 

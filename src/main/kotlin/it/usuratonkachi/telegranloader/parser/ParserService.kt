@@ -31,5 +31,5 @@ class EpisodeWrapper(
         return "${this.series} ${this.season}x${this.episode}.${this.extension}"
     }
 
-    fun toPath(rootPath: String): Path = Paths.get(rootPath, this.series, this.season.toString(), this.episode.toString(), toString())
+    fun toPath(rootPath: String): Path = Paths.get(rootPath, this.series, "Season ${this.season}", toString())
 }
