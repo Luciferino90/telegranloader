@@ -5,18 +5,18 @@ import com.github.badoualy.telegram.api.UpdateCallback
 import com.github.badoualy.telegram.api.utils.getAbsMediaInput
 import com.github.badoualy.telegram.tl.api.*
 import com.github.badoualy.telegram.tl.core.TLIntVector
-import it.usuratonkachi.telegranloader.bot.TelegramBotPolling
 import it.usuratonkachi.telegranloader.config.AnsweringBot
 import it.usuratonkachi.telegranloader.config.TelegramCommonProperties
+import it.usuratonkachi.telegranloader.parser.ParserService
 import org.springframework.stereotype.Component
 import java.io.File
 import java.io.FileOutputStream
-import java.lang.RuntimeException
 
 @Component
 class TelegramApiListener(
         private val telegramCommonProperties: TelegramCommonProperties,
-        private val answeringBot: AnsweringBot
+        private val answeringBot: AnsweringBot,
+        private val parserService: ParserService
 ) : UpdateCallback {
 
     override fun onUpdates(client: TelegramClient, updates: TLUpdates) {
@@ -36,12 +36,15 @@ class TelegramApiListener(
                 .toList()
     }
 
-    private fun getFilename(media: TLMessageMediaDocument): String = media.document.asDocument.attributes
-            .stream()
-            .map { it as TLDocumentAttributeFilename }
-            .map { it.fileName as String }
-            .findFirst()
-            .orElseThrow{RuntimeException("No filename found!")}
+    private fun getFilename(media: TLMessageMediaDocument): String {
+        val filename = media.document.asDocument.attributes
+                .stream()
+                .map { it as TLDocumentAttributeFilename }
+                .map { it.fileName as String }
+                .findFirst()
+                .orElseThrow { RuntimeException("No filename found!") }
+        return parserService.getEpisodeWrapper(filename).toString()
+    }
 
     fun download(client: TelegramClient, media: TLMessageMediaDocument, filename: String) {
         val outputFile = File("/tmp", filename)
