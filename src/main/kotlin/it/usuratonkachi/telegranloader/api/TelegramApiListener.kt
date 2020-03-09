@@ -36,15 +36,8 @@ class TelegramApiListener(
                 .toList()
     }
 
-    private fun getFilename(media: TLMessageMediaDocument): Path {
-        val filename = media.document.asDocument.attributes
-                .stream()
-                .map { it as TLDocumentAttributeFilename }
-                .map { it.fileName as String }
-                .findFirst()
-                .orElseThrow { RuntimeException("No filename found!") }
-        return parserService.getEpisodeWrapper(filename)
-    }
+    private fun getFilename(media: TLMessageMediaDocument): Path =
+            parserService.getEpisodeWrapper(media.document.asDocument.attributes.filterIsInstance<TLDocumentAttributeFilename>().last().fileName)
 
     fun download(client: TelegramClient, media: TLMessageMediaDocument, outputPath: Path) {
         val outputFile = outputPath.toFile()
