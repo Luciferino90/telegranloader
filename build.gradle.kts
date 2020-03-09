@@ -28,6 +28,8 @@ dependencies {
 	implementation("org.telegram:telegramapi:66.2")
 	implementation("org.telegram:telegrambots:4.6")
 	implementation("org.projectlombok:lombok:1.18.12")
+	implementation("org.goots:jdownloader:0.3")
+	implementation("com.turn:ttorrent:1.5")
 	testImplementation("org.springframework.boot:spring-boot-starter-test") {
 		exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
 	}
