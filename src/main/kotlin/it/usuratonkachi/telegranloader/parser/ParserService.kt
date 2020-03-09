@@ -7,59 +7,16 @@ import java.nio.file.Paths
 
 @Service
 class ParserService(
-        private val telegramCommonProperties: TelegramCommonProperties
+        private val telegramCommonProperties: TelegramCommonProperties,
+        private val parserConfiguration: ParserConfiguration
 ) {
 
-    private val rules = mapOf(
-            ".*[S][0-9]{2}[E][0-9]{2}.*".toRegex() to { regex: Regex, mediaName: String ->
-                {
-                    val filenameRegex = "[S][0-9]{2}[E][0-9]{2}".toRegex()
-                    val seasonRegex = "[S][0-9]{2}".toRegex()
-                    val episodeRegex = "[E][0-9]{2}".toRegex()
-
-                    val filename = filenameRegex.split(mediaName)[0].replace(".", " ").trim()
-                    val season = seasonRegex.find(mediaName)!!.groupValues.first().removePrefix(seasonRegex.toString()[1].toString())
-                    val episode = episodeRegex.find(mediaName)!!.groupValues.first().removePrefix(episodeRegex.toString()[1].toString())
-                    val extension = mediaName.split(".").last()
-                    EpisodeWrapper(season, episode, filename, extension).toPath(telegramCommonProperties.downloadpath)
-                }
-            },
-            "^Boku No Hero Academia [0-9]+Th Season - [0-9]{2}.[a-zA-Z0-9]+".toRegex() to { regex: Regex, mediaName: String ->
-                {
-                    val filenameRegex = "[0-9]".toRegex()
-                    val seasonRegex = "[0-9]".toRegex()
-                    val episodeRegex = "[0-9]{2}".toRegex()
-
-                    val filename = filenameRegex.split(mediaName)[0].replace(".", " ").trim()
-                    val season = seasonRegex.find(mediaName)!!.groupValues.first().removePrefix(seasonRegex.toString()[1].toString())
-                    val episode = episodeRegex.find(mediaName)!!.groupValues.first().removePrefix(episodeRegex.toString()[1].toString())
-                    val extension = mediaName.split(".").last()
-                    EpisodeWrapper(season, episode, filename, extension).toPath(telegramCommonProperties.downloadpath)
-                }
-            },
-            "^[BO]+[0-9]+[_]?[A-Z]+[.][a-zA-Z0-9]+".toRegex() to { regex: Regex, mediaName: String ->
-                {
-                    val episodeRegex = "[0-9]+".toRegex()
-                    val filename = "Boruto"
-                    val season = "01"
-                    val episode = episodeRegex.find(mediaName)!!.groupValues.first().removePrefix(episodeRegex.toString()[1].toString())
-                    val extension = mediaName.split(".").last()
-                    EpisodeWrapper("1", episode, "Boruto", extension).toPath(telegramCommonProperties.downloadpath)
-                }
-            }
-    )
-
     fun getEpisodeWrapper(mediaName: String): Path =
-            rules.entries
-                    .filter { entry -> entry.key.matches(mediaName) }
-                    .map { entry ->
-                        {
-                            val cleanedName = mediaName.replace(".US.", "")
-                            entry.value.invoke(entry.key, cleanedName).invoke()
-                        }
-                    }
+            parserConfiguration.parser!!.entries
+                    .filter { entry -> entry.key.toRegex().matches(mediaName) }
+                    .map { entry -> getEpisodeWrapper(entry.value, mediaName) }
+                    .map { it.toPath(telegramCommonProperties.downloadpath) }
                     .first()
-                    .invoke()
 
     class EpisodeWrapper(
             private val season: String,
