@@ -49,7 +49,7 @@ class TelegramApiClientConfigurator(
         print("You are signed as ${self.firstName} ${self.lastName} @ ${self.username}")
     }
 
-    fun readMessages(client: TelegramClient) {
+    /*fun readMessages(client: TelegramClient) {
         val tlAbsDialogs: TLAbsDialogs = client.messagesGetDialogs(false, 0, 0, TLInputPeerEmpty(), 30)
 
         val inputPeer = getInputPeer(tlAbsDialogs)
@@ -66,7 +66,7 @@ class TelegramApiClientConfigurator(
             if (topMessage is TLMessage) { // The message could also be a file, a photo, a gif, ...
                 println(topMessage.message)
             } else if (topMessage is TLMessageService) {
-                val action = topMessage.action
+                //val action = topMessage.action
                 // action defined the type of message (user joined group, ...)
                 println("Service message")
             }
@@ -80,6 +80,6 @@ class TelegramApiClientConfigurator(
         if (peer is TLChannel) return TLInputPeerChannel(peer.id, peer.accessHash)
         if (peer is TLChat) return TLInputPeerChat(peer.id)
         return if (peer is TLUser) TLInputPeerUser(peer.id, peer.accessHash) else TLInputPeerEmpty()
-    }
+    }*/
 
 }

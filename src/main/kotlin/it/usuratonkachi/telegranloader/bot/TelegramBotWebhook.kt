@@ -1,6 +1,7 @@
 package it.usuratonkachi.telegranloader.bot
 
 import it.usuratonkachi.telegranloader.config.AnsweringBot
+import it.usuratonkachi.telegranloader.config.Log
 import it.usuratonkachi.telegranloader.config.TelegramCommonProperties
 import lombok.extern.slf4j.Slf4j
 import org.telegram.telegrambots.bots.TelegramWebhookBot
@@ -19,9 +20,11 @@ class TelegramBotWebhook(
         private val telegramCommonProperties: TelegramCommonProperties
 ) : TelegramWebhookBot(), AnsweringBot {
 
+    companion object : Log
+
     @PostConstruct
     private fun init() {
-        println("Bot started in " + this.javaClass.simpleName + " mode")
+        logger().info("Bot started in " + this.javaClass.simpleName + " mode")
         val botsApi = TelegramBotsApi()
         try {
             botsApi.registerBot(this)
