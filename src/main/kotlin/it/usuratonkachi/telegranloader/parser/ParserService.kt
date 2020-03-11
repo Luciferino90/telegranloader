@@ -4,6 +4,7 @@ import it.usuratonkachi.telegranloader.config.TelegramCommonProperties
 import org.springframework.stereotype.Service
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.*
 
 @Service
 class ParserService(
@@ -12,11 +13,13 @@ class ParserService(
 ) {
 
     fun getEpisodeWrapper(mediaName: String): Path =
-            parserConfiguration.parser!!.entries
-                    .filter { entry -> entry.key.toRegex().matches(mediaName) }
-                    .map { entry -> getEpisodeWrapper(entry.value, mediaName) }
-                    .map { it.toPath(telegramCommonProperties.downloadpath) }
-                    .first()
+            Optional.ofNullable(
+                    parserConfiguration.parser!!.entries
+                            .filter { entry -> entry.key.toRegex().matches(mediaName) }
+                            .map { entry -> getEpisodeWrapper(entry.value, mediaName) }
+                            .map { it.toPath(telegramCommonProperties.downloadpath) }
+                            .firstOrNull()
+            ).orElseGet{ Path.of(telegramCommonProperties.downloadpath, "others", mediaName) }
 
 
     private fun getEpisodeWrapper(configurationMapper: ConfigurationMapper, mediaName: String) : EpisodeWrapper {
