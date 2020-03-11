@@ -18,17 +18,28 @@ class ParserService(
                     .map { it.toPath(telegramCommonProperties.downloadpath) }
                     .first()
 
-    class EpisodeWrapper(
-            private val season: String,
-            private val episode: String,
-            private val series: String,
-            private val extension: String
-    ) {
-        override fun toString(): String {
-            return "${this.series} ${this.season.toInt()}x${this.episode}.${this.extension}"
-        }
 
-        fun toPath(rootPath: String): Path = Paths.get(rootPath, this.series, "Season ${this.season}", toString())
+    private fun getEpisodeWrapper(configurationMapper: ConfigurationMapper, mediaName: String) : EpisodeWrapper {
+        val extension = mediaName.split(".").last()
+        val cleanMediaName: String = mediaName.replace(".US.", "")
+        val filename: String = configurationMapper.calculateFilename(cleanMediaName)
+        val season: String = configurationMapper.calculateSeason(cleanMediaName)
+        val episode: String = configurationMapper.calculateEpisode(cleanMediaName)
+
+        return EpisodeWrapper(season, episode, filename, extension)
     }
 
+}
+
+class EpisodeWrapper(
+        private val season: String,
+        private val episode: String,
+        private val series: String,
+        private val extension: String
+) {
+    override fun toString(): String {
+        return "${this.series} ${this.season.toInt()}x${this.episode}.${this.extension}"
+    }
+
+    fun toPath(rootPath: String): Path = Paths.get(rootPath, this.series, "Season ${this.season}", toString())
 }

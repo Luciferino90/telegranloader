@@ -7,14 +7,29 @@ plugins {
 	kotlin("plugin.spring") version "1.3.61"
 }
 
+apply(plugin = "io.spring.dependency-management")
+apply(plugin = "kotlin")
+apply(plugin = "application")
+
+
+
 group = "it.usuratonkachi"
-version = "0.0.1-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_11
+version = "1.0"
+java.sourceCompatibility = JavaVersion.VERSION_13
 
 repositories {
 	mavenCentral()
 	maven {
 		url = uri("https://jitpack.io")
+	}
+}
+
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:2.2.5.RELEASE")
 	}
 }
 
@@ -30,6 +45,7 @@ dependencies {
 	implementation("org.projectlombok:lombok:1.18.12")
 	implementation("org.goots:jdownloader:0.3")
 	implementation("com.turn:ttorrent:1.5")
+	implementation("io.projectreactor:reactor-core:3.3.3.RELEASE")
 	testImplementation("org.springframework.boot:spring-boot-starter-test") {
 		exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
 	}
@@ -44,4 +60,12 @@ tasks.withType<KotlinCompile> {
 		freeCompilerArgs = listOf("-Xjsr305=strict")
 		jvmTarget = "1.8"
 	}
+}
+
+tasks.getByName<Jar>("jar") {
+	enabled = true
+}
+
+tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+	mainClassName = "it.usuratonkachi.telegranloader.TelegranloaderApplicationKt"
 }

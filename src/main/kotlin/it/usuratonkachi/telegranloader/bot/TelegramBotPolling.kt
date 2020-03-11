@@ -1,6 +1,7 @@
 package it.usuratonkachi.telegranloader.bot
 
 import it.usuratonkachi.telegranloader.config.AnsweringBot
+import it.usuratonkachi.telegranloader.config.Log
 import it.usuratonkachi.telegranloader.config.TelegramCommonProperties
 import lombok.extern.slf4j.Slf4j
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
@@ -24,6 +25,8 @@ class TelegramBotPolling(
         private var telegramBotProperties: TelegramBotProperties
 ) : TelegramLongPollingBot(), AnsweringBot {
 
+    companion object: Log
+
     private val updateHashMap: ConcurrentHashMap<Int, Update> = ConcurrentHashMap()
         @Synchronized get
 
@@ -44,7 +47,6 @@ class TelegramBotPolling(
     override fun onUpdateReceived(update: Update?) {
         update.takeIf { telegramCommonProperties.owners.contains(it!!.message.from.id) }
                 ?.apply {
-                    println("Received")
                     addMessage(this)
                     forwardMessage(telegramBotProperties.chatid, this.message.chatId, this.message.messageId)
                 }
@@ -53,7 +55,6 @@ class TelegramBotPolling(
     private fun forwardMessage(chatId: String, fromChatId: Long, messageId: Int) {
         val sendMessage: ForwardMessage = ForwardMessage(chatId, fromChatId, messageId)
         execute(sendMessage)
-        println("Sent")
     }
 
     @Synchronized
@@ -63,6 +64,7 @@ class TelegramBotPolling(
 
     @Synchronized
     override fun answerMessage(key: Int, response: String, remove: Boolean){
+        if (!updateHashMap.containsKey(key)) return
         val update: Update = if (remove) updateHashMap.remove(key)!! else updateHashMap[key]!!
         val sendResponse = SendMessage(update.message.chatId, response)
         sendResponse.replyToMessageId = update.message.messageId
@@ -73,7 +75,6 @@ class TelegramBotPolling(
     private fun deleteMessage(chatId: Long, messageId: Int){
         val deleteMessage = DeleteMessage(chatId, messageId)
         execute(deleteMessage)
-        println("Deleted")
     }
 
 }
