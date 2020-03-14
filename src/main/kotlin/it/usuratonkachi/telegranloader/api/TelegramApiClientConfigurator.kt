@@ -8,9 +8,6 @@ import com.github.badoualy.telegram.tl.api.auth.TLAuthorization
 import com.github.badoualy.telegram.tl.api.auth.TLSentCode
 import it.usuratonkachi.telegranloader.config.TelegramCommonProperties
 import org.springframework.stereotype.Component
-import java.io.IOError
-import java.lang.Exception
-import java.lang.reflect.InvocationTargetException
 import java.util.*
 import javax.annotation.PostConstruct
 

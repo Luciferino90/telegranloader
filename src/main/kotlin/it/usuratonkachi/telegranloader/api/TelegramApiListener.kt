@@ -9,14 +9,16 @@ import it.usuratonkachi.telegranloader.config.TelegramCommonProperties
 import it.usuratonkachi.telegranloader.downloader.DownloaderSelector
 import it.usuratonkachi.telegranloader.parser.ParserService
 import org.springframework.stereotype.Component
-import org.telegram.telegrambots.meta.api.objects.Update
 import reactor.core.Disposable
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import reactor.core.publisher.SynchronousSink
+import reactor.util.concurrent.Queues
 import java.nio.file.Path
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Semaphore
-import javax.annotation.PostConstruct
+import java.time.Duration
+
+
+class MessageWrapper(var message: TLMessage, var client: TelegramClient)
 
 @Component
 class TelegramApiListener(
@@ -28,53 +30,51 @@ class TelegramApiListener(
 
     companion object : Log
 
-    private var semaphore = true
-
-
-    @Synchronized fun setSemaphore(semaphore: Boolean) {
-        this.semaphore = semaphore
-    }
+    private var messageQueue = Queues.unbounded<MessageWrapper>().get()
+    private var updateFlux : Disposable = Flux.generate { sink: SynchronousSink<MessageWrapper> ->
+                if (messageQueue.size != 0) {
+                    val messageWrapper: MessageWrapper = messageQueue.poll()
+                    sink.next(messageWrapper)
+                } else {
+                    sink.error(RuntimeException())
+                }
+            }
+            .flatMap { reactorChainer(it.client, it.message) }
+            .onErrorResume { Flux.empty() }
+            .repeatWhen { it.delayElements(Duration.ofSeconds(1))}
+            .subscribe()
 
     override fun onUpdates(client: TelegramClient, updates: TLUpdates) {
-        while (!semaphore)
-            Thread.sleep(10000)
-        setSemaphore(false)
-        reactorChainer(client, updates)
-                .subscribe()
-        setSemaphore(true)
-    }
-
-    private fun reactorChainer(client: TelegramClient, updates: TLUpdates): Flux<Pair<TLMessageMediaDocument, Path>> {
-        return Flux.fromStream(updates.updates.stream())
-
+        Flux.fromStream(updates.updates.stream())
                 .filter { it is TLUpdateNewMessage }
                 .map { it as TLUpdateNewMessage }
                 .map { it.message as TLMessage }
-                .flatMap { tlMessage ->
-                    Mono.just(tlMessage)
-                            .filter { telegramCommonProperties.owners.contains(it.fromId) }
+                .filter { telegramCommonProperties.owners.contains(it.fromId) }
+                .map { MessageWrapper(it, client) }
+                .doOnNext { messageQueue.add(it) }
+                .subscribe()
+    }
 
-                            // Switch here for download by url / Magnet
-                            .filter { it.media != null && it.media is TLMessageMediaDocument }
-                            .map { it.media }
-                            .map { it as TLMessageMediaDocument to getFilename(it) }
-                            .flatMap {
-                                mediaPathPair -> Mono.just(mediaPathPair)
-                                    .doOnNext { answeringBotService.answer(tlMessage, "Download started for " + it.second, false) }
-                                    .doOnNext { downloaderSelector.downloader(tlMessage, client, it.first, it.second) }
-                                    .doOnNext { answeringBotService.answer(tlMessage, "Download finished for " + it.second, false) }
-                                    .doOnNext { deleteRequest(client, tlMessage) }
-                                    .doOnNext { answeringBotService.answer(tlMessage, "Clean up finished for " + it.second, true) }
-                                    .doOnError {
-                                        val errorMsg = "Exception occurred during download for ${mediaPathPair.second} ${it.message}"
-                                        logger().error(errorMsg, it)
-                                        answeringBotService.answer(tlMessage, errorMsg, true)
-                                    }
+    private fun reactorChainer(client: TelegramClient, message: TLMessage): Mono<Pair<TLMessageMediaDocument, Path>> {
+        return Mono.just(message)
+                // Switch here for download by url / Magnet
+                .filter { it.media != null && it.media is TLMessageMediaDocument }
+                .map { it.media }
+                .map { it as TLMessageMediaDocument to getFilename(it) }
+                .flatMap { mediaPathPair ->
+                    Mono.just(mediaPathPair)
+                            .doOnNext { answeringBotService.answer(message, "Download started for " + it.second, false) }
+                            .doOnNext { downloaderSelector.downloader(message, client, it.first, it.second) }
+                            .doOnNext { answeringBotService.answer(message, "Download finished for " + it.second, false) }
+                            .doOnNext { deleteRequest(client, message) }
+                            .doOnNext { answeringBotService.answer(message, "Clean up finished for " + it.second, true) }
+                            .doOnError {
+                                val errorMsg = "Exception occurred during download for ${mediaPathPair.second} ${it.message}"
+                                logger().error(errorMsg, it)
+                                answeringBotService.answer(message, errorMsg, true)
                             }
-                            .doOnError { logger().error("Exception occurred during retrieve of media filename ${it.message}", it) }
                 }
-                .doOnError { logger().error("Exception occurred during on message received ${it.message}", it) }
-
+                .doOnError { logger().error("Exception occurred during retrieve of media filename ${it.message}", it) }
     }
 
     private fun getFilename(media: TLMessageMediaDocument): Path =
