@@ -20,6 +20,7 @@ class TDownloader(answeringBotService: AnsweringBotService)  : Downloader(answer
      */
     override fun download(client: TelegramClient, media: TLMessageMediaDocument, outputFile: File) {
         val fos = FileOutputStream(outputFile)
+        // media.getAbsMediaInput()!!.mimeType switch to torrent WTF
         client.downloadSync(media.getAbsMediaInput()!!.inputFileLocation, media.getAbsMediaInput()!!.size, fos)
     }
 

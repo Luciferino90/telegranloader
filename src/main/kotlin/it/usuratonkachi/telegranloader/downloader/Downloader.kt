@@ -55,10 +55,8 @@ class DownloaderSelector(
                 file with torrent mimetype -> torrent
                 file with different mimetypes -> Telegram
          */
-        when("a"){
-            "a" -> jDownloader.download(message, client, media, outputPath)
-            "b" -> tDownloader.download(message, client, media, outputPath)
-            "c" -> torrentDownloader.download(message, client, media, outputPath)
+        when(media) {
+            is TLMessageMediaDocument ->  tDownloader.download(message, client, media, outputPath)
         }
     }
 }

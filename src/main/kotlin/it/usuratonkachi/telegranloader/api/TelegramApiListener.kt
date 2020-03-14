@@ -9,9 +9,14 @@ import it.usuratonkachi.telegranloader.config.TelegramCommonProperties
 import it.usuratonkachi.telegranloader.downloader.DownloaderSelector
 import it.usuratonkachi.telegranloader.parser.ParserService
 import org.springframework.stereotype.Component
+import org.telegram.telegrambots.meta.api.objects.Update
+import reactor.core.Disposable
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.nio.file.Path
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Semaphore
+import javax.annotation.PostConstruct
 
 @Component
 class TelegramApiListener(
@@ -23,19 +28,33 @@ class TelegramApiListener(
 
     companion object : Log
 
-    override fun onUpdates(client: TelegramClient, updates: TLUpdates) {
-        reactorChainer(client, updates)
-                .subscribe()
+    private var semaphore = true
+
+
+    @Synchronized fun setSemaphore(semaphore: Boolean) {
+        this.semaphore = semaphore
     }
 
-    fun reactorChainer(client: TelegramClient, updates: TLUpdates): Flux<Pair<TLMessageMediaDocument, Path>> {
+    override fun onUpdates(client: TelegramClient, updates: TLUpdates) {
+        while (!semaphore)
+            Thread.sleep(10000)
+        setSemaphore(false)
+        reactorChainer(client, updates)
+                .subscribe()
+        setSemaphore(true)
+    }
+
+    private fun reactorChainer(client: TelegramClient, updates: TLUpdates): Flux<Pair<TLMessageMediaDocument, Path>> {
         return Flux.fromStream(updates.updates.stream())
+
                 .filter { it is TLUpdateNewMessage }
                 .map { it as TLUpdateNewMessage }
                 .map { it.message as TLMessage }
                 .flatMap { tlMessage ->
                     Mono.just(tlMessage)
                             .filter { telegramCommonProperties.owners.contains(it.fromId) }
+
+                            // Switch here for download by url / Magnet
                             .filter { it.media != null && it.media is TLMessageMediaDocument }
                             .map { it.media }
                             .map { it as TLMessageMediaDocument to getFilename(it) }
