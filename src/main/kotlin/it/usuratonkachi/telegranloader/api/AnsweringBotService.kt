@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service
 class AnsweringBotService(private val answeringBot: AnsweringBot){
 
     fun answer(message: TLMessage, response: String, remove: Boolean) {
-        answeringBot.answerMessage(message.fwdFrom.date, response, remove)
+        answeringBot.answerMessage(message.fwdFrom.date ?: message.date, response, remove)
     }
 
 }

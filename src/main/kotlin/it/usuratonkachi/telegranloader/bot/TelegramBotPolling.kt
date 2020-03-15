@@ -59,7 +59,7 @@ class TelegramBotPolling(
 
     @Synchronized
     private fun addMessage(update: Update){
-        updateHashMap[update.message.forwardDate] = update
+        updateHashMap[update.message.forwardDate ?: update.message.date] = update
     }
 
     @Synchronized
