@@ -53,13 +53,13 @@ class TelegramBotPolling(
     }
 
     private fun forwardMessage(chatId: String, fromChatId: Long, messageId: Int) {
-        val sendMessage: ForwardMessage = ForwardMessage(chatId, fromChatId, messageId)
+        val sendMessage = ForwardMessage(chatId, fromChatId, messageId)
         execute(sendMessage)
     }
 
     @Synchronized
     private fun addMessage(update: Update){
-        updateHashMap[update.message.forwardDate] = update
+        updateHashMap[update.message.forwardDate ?: update.message.date] = update
     }
 
     @Synchronized

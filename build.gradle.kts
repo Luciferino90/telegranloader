@@ -44,7 +44,7 @@ dependencies {
 	implementation("org.telegram:telegrambots:4.6")
 	implementation("org.projectlombok:lombok:1.18.12")
 	implementation("org.goots:jdownloader:0.3")
-	implementation("com.turn:ttorrent:1.5")
+	implementation("com.turn:ttorrent-core:1.5")
 	implementation("io.projectreactor:reactor-core:3.3.3.RELEASE")
 	testImplementation("org.springframework.boot:spring-boot-starter-test") {
 		exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
@@ -64,6 +64,10 @@ tasks.withType<KotlinCompile> {
 
 tasks.getByName<Jar>("jar") {
 	enabled = true
+}
+
+tasks.getByName<CreateStartScripts>("startScripts") {
+	mainClassName = "it.usuratonkachi.telegranloader.TelegranloaderApplicationKt"
 }
 
 tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {

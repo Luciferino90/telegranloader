@@ -3,16 +3,12 @@ package it.usuratonkachi.telegranloader.api
 import com.github.badoualy.telegram.api.Kotlogram
 import com.github.badoualy.telegram.api.TelegramApp
 import com.github.badoualy.telegram.api.TelegramClient
-import com.github.badoualy.telegram.api.utils.id
-import com.github.badoualy.telegram.tl.api.*
+import com.github.badoualy.telegram.tl.api.TLUser
 import com.github.badoualy.telegram.tl.api.auth.TLAuthorization
 import com.github.badoualy.telegram.tl.api.auth.TLSentCode
-import com.github.badoualy.telegram.tl.api.messages.TLAbsDialogs
 import it.usuratonkachi.telegranloader.config.TelegramCommonProperties
 import org.springframework.stereotype.Component
-import java.io.IOError
 import java.util.*
-import java.util.function.Consumer
 import javax.annotation.PostConstruct
 
 
@@ -33,7 +29,7 @@ class TelegramApiClientConfigurator(
 
         try {
             client.accountGetAuthorizations()
-        } catch (e: IOError) {
+        } catch (e: Exception) {
             ifCodeIsRequired(client)
         }
 
