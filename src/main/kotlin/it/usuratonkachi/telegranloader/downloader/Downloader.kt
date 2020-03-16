@@ -40,7 +40,6 @@ abstract class Downloader(private val answeringBotService: AnsweringBotService) 
                 return
             }
         }
-        outputPath.parent.toFile().mkdirs()
         download(Download(client = client, media = media, outputFile = outputFile))
         TDownloader.logger().info("Downloaded file @" + outputFile.absolutePath)
     }
@@ -54,7 +53,6 @@ abstract class Downloader(private val answeringBotService: AnsweringBotService) 
             answeringBotService.answer(message, msg, false)
             outputFile.delete()
         }
-        outputPath.parent.toFile().mkdirs()
         download(Download(client = client, url = url, outputFile = outputFile))
         TDownloader.logger().info("Downloaded file @" + outputFile.absolutePath)
     }
@@ -73,17 +71,17 @@ class DownloaderSelector(
 
     companion object: Log
 
-    public fun reactorDownloader(client: TelegramClient, url: String): Mono<Void> {
+    fun reactorDownloader(client: TelegramClient, url: String): Mono<Void> {
         //  Has a Media?
         //      Media has mime torrent  -> Torrent Downloader
         //      Media has others media  -> Telegram Downloader
         return Mono.just(url)
                 .map { downloader(TLMessage(), client,  url, Path.of("")) }
-                .doOnError { TelegramApiListener.logger().error("Exception occurred during retrieve of media url ${url}", it) }
+                .doOnError { TelegramApiListener.logger().error("Exception occurred during retrieve of media url $url", it) }
                 .then()
     }
 
-    public fun reactorDownloader(client: TelegramClient, message: TLMessage): Mono<Pair<TLMessageMediaDocument, Path>> {
+    fun reactorDownloader(client: TelegramClient, message: TLMessage): Mono<Pair<TLMessageMediaDocument, Path>> {
         //  Has a Media?
         //      Media has mime torrent  -> Torrent Downloader
         //      Media has others media  -> Telegram Downloader
@@ -110,12 +108,13 @@ class DownloaderSelector(
     // Torrent and Media file
     private fun downloader(message: TLMessage, client: TelegramClient, media: TLMessageMediaDocument, outputPath: Path) {
         when(media.getAbsMediaInput()!!.mimeType) {
-            is String ->  tDownloader.download(Download(client = client, outputFile = outputPath.toFile(), message = message, media = media))
+            "application/x-bittorrent" ->  torrentDownloader.download(Download(client = client, outputFile = outputPath.toFile(), message = message, media = media))
             else ->  tDownloader.download(Download(client = client, outputFile = outputPath.toFile(), message = message, media = media))
         }
     }
 
     // Magnet and Url file
+    // magnet example: magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c&dn=Big+Buck+Bunny&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fbig-buck-bunny.torrent
     private fun downloader(message: TLMessage, client: TelegramClient, url: String, outputPath: Path) {
         if (url.startsWith("magnet:")) jDownloader.download(Download(message = message, client = client, url = url, outputFile = outputPath.toFile()))
         else jDownloader.download(Download(message = message, client = client, url = url, outputFile = outputPath.toFile()))

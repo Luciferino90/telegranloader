@@ -39,7 +39,13 @@ class TelegramApiListener(
             .subscribe()
 
     override fun onShortMessage(client: TelegramClient, message: TLUpdateShortMessage) {
-        if (telegramCommonProperties.owners.contains(message.userId)) messageQueue.add(MessageWrapper(messageString = message.message, client = client))
+        if (telegramCommonProperties.owners.contains(message.userId)
+                || message.message.startsWith("http://")
+                || message.message.startsWith("https://")
+                || message.message.startsWith("magnet:")
+                || message.message.startsWith("www.")
+        )
+            messageQueue.add(MessageWrapper(messageString = message.message, client = client))
     }
 
     override fun onUpdates(client: TelegramClient, updates: TLUpdates) {
