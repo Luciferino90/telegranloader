@@ -32,17 +32,18 @@ class ConfigurationMapper(
 
 class Element(
         var regexp: String? = null,
-        var fixed: String? = null
+        var fixed: String? = null,
+        var replace: String? = null
 ) {
     fun calculateFilename(mediaName: String) : String {
-        return fixed ?: regexp!!.toRegex().split(mediaName)[0].replace(".", " ").trim()
+        return fixed ?: regexp!!.toRegex().split(mediaName)[0].replace(".", " ").replace("_", " ").trim()
     }
 
     fun calculateSeason(mediaName: String) : String {
-        return fixed ?: regexp!!.toRegex().find(mediaName)!!.groupValues.first().removePrefix(regexp!!.toRegex().toString()[1].toString())
+        return fixed ?: regexp!!.toRegex().find(mediaName)!!.groupValues.first().replace(replace ?: "", "")
     }
 
     fun calculateEpisode(mediaName: String) : String {
-        return fixed ?: regexp!!.toRegex().find(mediaName)!!.groupValues.first().removePrefix(regexp!!.toRegex().toString()[1].toString())
+        return fixed ?: regexp!!.toRegex().find(mediaName)!!.groupValues.first().replace(replace ?: "", "")
     }
 }
