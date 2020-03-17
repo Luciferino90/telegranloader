@@ -121,7 +121,7 @@ class DownloaderSelector(
     }
 
     private fun getFilename(media: TLMessageMediaDocument): Path =
-            parserService.getEpisodeWrapper(media.document.asDocument.attributes.filterIsInstance<TLDocumentAttributeFilename>().last().fileName)
+            parserService.getEpisodeWrapper(media)
 
     private fun deleteRequest(client: TelegramClient, message: TLMessage) {
         val vector = TLIntVector()
