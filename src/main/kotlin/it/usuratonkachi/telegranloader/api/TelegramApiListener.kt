@@ -34,6 +34,10 @@ class TelegramApiListener(
                 }
             }
             .flatMap { if (it.message != null) downloaderSelector.reactorDownloader(it.client, it.message!!) else downloaderSelector.reactorDownloader(it.client, it.messageString!!) }
+            .doOnError { ex ->
+                if (ex !is java.lang.RuntimeException)
+                    ex.printStackTrace()
+            }
             .onErrorResume { Flux.empty() }
             .repeatWhen { it.delayElements(Duration.ofSeconds(1))}
             .subscribe()
