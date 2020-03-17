@@ -18,28 +18,8 @@ class ParserService(
     fun getEpisodeWrapper(media: TLMessageMediaDocument): Path {
         val filename: String = media.document.asDocument.attributes.filterIsInstance<TLDocumentAttributeFilename>().last().fileName
         val caption = media.caption.replace("\n", "")
-        val fallback: Path
-        /*
-        fallback = if (false){ //( caption.isNotEmpty() && "#Ep[0-9]{1,3} #S[0-9].*".toRegex().matches(caption.replace("\n", "")) ) {
-            val series = filename.split(".").stream().limit(filename.split(".").size - 1L).collect(Collectors.joining(".")).replace("_", " ")
-            val extension = filename.split(".").last()
-            val episode = "#Ep[0-9]{1,3}".toRegex().find(caption)!!.groups[0]!!.value.replace("#Ep", "")
-            val season = "#S[0-9]".toRegex().find(caption)!!.groups[0]!!.value.replace("#S", "")
-            EpisodeWrapper(season, episode, series, extension).toPath(telegramCommonProperties.downloadpath)
-        } else {
-            Path.of(telegramCommonProperties.downloadpath, "others", filename)
-        }*/
-        return if (caption.isEmpty()) getEpisodeWrapper(filename) else getEpisodeWrapper(filename, caption)
+        return getEpisodeWrapper(filename, caption)
     }
-
-    fun getEpisodeWrapper(mediaName: String): Path =
-            Optional.ofNullable(
-                    parserConfiguration.parser!!.entries
-                            .filter { entry -> entry.key.toRegex().matches(mediaName) }
-                            .map { entry -> getEpisodeWrapper(entry.value, mediaName) }
-                            .map { it.toPath(telegramCommonProperties.downloadpath) }
-                            .firstOrNull()
-            ).orElseGet{ Path.of(telegramCommonProperties.downloadpath, "others", mediaName) }
 
     fun getEpisodeWrapper(mediaName: String, caption: String): Path =
             Optional.ofNullable(
