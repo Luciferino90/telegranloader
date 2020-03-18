@@ -2,6 +2,7 @@ package it.usuratonkachi.telegranloader.downloader
 
 import com.github.badoualy.telegram.api.TelegramClient
 import com.github.badoualy.telegram.api.utils.getAbsMediaInput
+import com.github.badoualy.telegram.tl.api.TLDocumentAttributeFilename
 import com.github.badoualy.telegram.tl.api.TLMessage
 import com.github.badoualy.telegram.tl.api.TLMessageMediaDocument
 import com.github.badoualy.telegram.tl.core.TLIntVector
@@ -12,6 +13,7 @@ import it.usuratonkachi.telegranloader.downloader.jdownloader.JDownloader
 import it.usuratonkachi.telegranloader.downloader.telegram.TDownloader
 import it.usuratonkachi.telegranloader.downloader.torrent.TorrentDownloader
 import it.usuratonkachi.telegranloader.parser.ParserService
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
 import java.io.File
@@ -70,6 +72,9 @@ class DownloaderSelector(
 
     companion object: Log
 
+    @Value("\${telegram.dry.run:true}")
+    lateinit var dryRun: String
+
     fun reactorDownloader(client: TelegramClient, url: String): Mono<Void> {
         //  Has a Media?
         //      Media has mime torrent  -> Torrent Downloader
@@ -91,7 +96,7 @@ class DownloaderSelector(
                 .flatMap { mediaPathPair ->
                     Mono.just(mediaPathPair)
                             .doOnNext { answeringBotService.answer(message, "Download started for " + it.second, false) }
-                            .doOnNext { downloader(message, client, it.first, it.second) }
+                            .doOnNext { if (dryRun.toBoolean()) dryRun(it) else downloader(message, client, it.first, it.second) }
                             .doOnNext { answeringBotService.answer(message, "Download finished for " + it.second, false) }
                             .doOnNext { deleteRequest(client, message) }
                             .doOnNext { answeringBotService.answer(message, "Clean up finished for " + it.second, true) }
@@ -115,8 +120,7 @@ class DownloaderSelector(
     // Magnet and Url file
     // magnet example: magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c&dn=Big+Buck+Bunny&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fbig-buck-bunny.torrent
     private fun downloader(message: TLMessage, client: TelegramClient, url: String, outputPath: Path) {
-        if (url.startsWith("magnet:")) jDownloader.download(message, client, url, outputPath)
-        else jDownloader.download(message, client, url, outputPath)
+        jDownloader.download(message, client, url, outputPath)
     }
 
     private fun getFilename(media: TLMessageMediaDocument): Path =
@@ -127,6 +131,17 @@ class DownloaderSelector(
         vector.add(message.id)
         client.messagesDeleteMessages(true, vector)
         TelegramApiListener.logger().debug("Delete Message Done")
+    }
+
+    private fun dryRun(mediaPathPair: Pair<TLMessageMediaDocument, Path>) {
+        println("""
+            filename: ${mediaPathPair.first.document.asDocument.attributes.filterIsInstance<TLDocumentAttributeFilename>().last().fileName}
+            caption: ${mediaPathPair.first.caption.replace("\n", "")}
+            calculate: ${mediaPathPair.second}
+            
+            """.trimIndent()
+        )
+        println()
     }
 
 }

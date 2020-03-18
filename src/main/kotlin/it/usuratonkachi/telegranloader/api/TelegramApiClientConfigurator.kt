@@ -45,37 +45,4 @@ class TelegramApiClientConfigurator(
         print("You are signed as ${self.firstName} ${self.lastName} @ ${self.username}")
     }
 
-    /*fun readMessages(client: TelegramClient) {
-        val tlAbsDialogs: TLAbsDialogs = client.messagesGetDialogs(false, 0, 0, TLInputPeerEmpty(), 30)
-
-        val inputPeer = getInputPeer(tlAbsDialogs)
-        val tlAbsMessages = client.messagesGetHistory(inputPeer, 0, 0, 0, 10, 0, 0)
-
-        val mes = tlAbsMessages.messages.map { it as TLMessage }.first()
-
-        val messageMap = HashMap<Int, TLAbsMessage>()
-        tlAbsDialogs.messages.forEach(Consumer { message: TLAbsMessage -> messageMap[message.id] = message })
-
-        tlAbsDialogs.dialogs.forEach(Consumer { dialog: TLDialog ->
-            //print(nameMap[getId(dialog.peer)].toString() + ": ")
-            val topMessage = messageMap[dialog.topMessage]
-            if (topMessage is TLMessage) { // The message could also be a file, a photo, a gif, ...
-                println(topMessage.message)
-            } else if (topMessage is TLMessageService) {
-                //val action = topMessage.action
-                // action defined the type of message (user joined group, ...)
-                println("Service message")
-            }
-        })
-    }
-
-    fun getInputPeer(tlAbsDialogs: TLAbsDialogs): TLAbsInputPeer? {
-        val tlAbsPeer: TLAbsPeer = tlAbsDialogs.dialogs.filter { telegramCommonProperties.owners.contains((it.peer as TLPeerUser).userId) }.first().peer
-        val peerId: Int = tlAbsPeer.id!!
-        val peer = if (tlAbsPeer is TLPeerUser) tlAbsDialogs.users.stream().filter { user: TLAbsUser -> user.id == peerId }.findFirst().get() else tlAbsDialogs.chats.stream().filter { chat: TLAbsChat -> chat.id == peerId }.findFirst().get()
-        if (peer is TLChannel) return TLInputPeerChannel(peer.id, peer.accessHash)
-        if (peer is TLChat) return TLInputPeerChat(peer.id)
-        return if (peer is TLUser) TLInputPeerUser(peer.id, peer.accessHash) else TLInputPeerEmpty()
-    }*/
-
 }
