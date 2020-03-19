@@ -58,7 +58,6 @@ class TelegramBotPolling(
 
     private fun forwardMessage(chatId: String, fromChatId: Long, messageId: Int) {
         val sendMessage = ForwardMessage(chatId, fromChatId, messageId)
-        sendMessage.messageId = 123
         execute(sendMessage)
     }
 
