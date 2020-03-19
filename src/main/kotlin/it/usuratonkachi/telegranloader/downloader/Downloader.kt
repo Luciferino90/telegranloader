@@ -108,7 +108,6 @@ class DownloaderSelector(
 
     private fun dispatcher(message: TLMessage, client: TelegramClient, mediaPathPair: Pair<TLMessageMediaDocument, Path>): Mono<Pair<TLMessageMediaDocument, Path>> {
         return if (!telegramCommonProperties.isDryRun()) download(message, client, mediaPathPair) else generatePathPrediction(message, client, mediaPathPair)
-
     }
 
     private fun download(message: TLMessage, client: TelegramClient, mediaPathPair: Pair<TLMessageMediaDocument, Path>): Mono<Pair<TLMessageMediaDocument, Path>> {
