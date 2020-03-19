@@ -5,10 +5,10 @@ import it.usuratonkachi.telegranloader.config.AnsweringBot
 import org.springframework.stereotype.Service
 
 @Service
-class AnsweringBotService(private val answeringBot: AnsweringBot){
+class AnsweringBotService(private val AnsweringBot: AnsweringBot){
 
     fun answer(message: TLMessage, response: String, remove: Boolean) {
-        answeringBot.answerMessage(message.fwdFrom.date ?: message.date, response, remove)
+        AnsweringBot.answerMessage(message.fwdFrom.date ?: message.date, response, remove)
     }
 
 }

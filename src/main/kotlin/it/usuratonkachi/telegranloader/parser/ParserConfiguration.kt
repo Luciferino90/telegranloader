@@ -6,9 +6,14 @@ import org.springframework.stereotype.Component
 @Component
 @ConfigurationProperties(prefix = "series")
 class ParserConfiguration (
-        var parser: Map<String, ConfigurationMapper>? = null
+        var filename: ParserMapConfiguration? = null,
+        var caption: ParserMapConfiguration? = null
 )
 
+
+class ParserMapConfiguration (
+        var parser: Map<String, ConfigurationMapper>? = null
+)
 
 class ConfigurationMapper(
         var logicalName: String? = null,

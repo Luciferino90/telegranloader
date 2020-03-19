@@ -14,6 +14,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage
 import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import javax.annotation.PostConstruct
 
@@ -45,15 +46,19 @@ class TelegramBotPolling(
     override fun getBotToken(): String = telegramBotProperties.token
 
     override fun onUpdateReceived(update: Update?) {
-        update.takeIf { telegramCommonProperties.owners.contains(it!!.message.from.id) }
-                ?.apply {
-                    addMessage(this)
-                    forwardMessage(telegramBotProperties.chatid, this.message.chatId, this.message.messageId)
-                }
+        update?.let {
+            it.takeIf { telegramCommonProperties.owners.contains(it.message.from.id) }
+                    ?.apply { dispatcherMessage(this) }
+        }
+    }
+
+    private fun dispatcherMessage(update: Update) = run {
+        if (update.message.text != null && update.message.text.startsWith("/")) botCommand(update) else clientCommand(update)
     }
 
     private fun forwardMessage(chatId: String, fromChatId: Long, messageId: Int) {
         val sendMessage = ForwardMessage(chatId, fromChatId, messageId)
+        sendMessage.messageId = 123
         execute(sendMessage)
     }
 
@@ -66,15 +71,33 @@ class TelegramBotPolling(
     override fun answerMessage(key: Int, response: String, remove: Boolean){
         if (!updateHashMap.containsKey(key)) return
         val update: Update = if (remove) updateHashMap.remove(key)!! else updateHashMap[key]!!
+        answerMessage(update, response, remove)
+    }
+
+    private fun deleteMessage(chatId: Long, messageId: Int){
+        val deleteMessage = DeleteMessage(chatId, messageId)
+        execute(deleteMessage)
+    }
+
+    fun answerMessage(update: Update, response: String, remove: Boolean){
         val sendResponse = SendMessage(update.message.chatId, response)
         sendResponse.replyToMessageId = update.message.messageId
         execute(sendResponse)
         if (remove) deleteMessage(update.message.chatId, update.message.messageId)
     }
 
-    private fun deleteMessage(chatId: Long, messageId: Int){
-        val deleteMessage = DeleteMessage(chatId, messageId)
-        execute(deleteMessage)
+    fun botCommand(update: Update) {
+        update.message.text.takeIf { it.startsWith("/dryrun") }
+                ?.apply {
+                    val dryRun = this.replace("/dryrun", "").trim().toBoolean()
+                    telegramCommonProperties.setDryRun(dryRun)
+                    answerMessage(update, "DryRun is $dryRun", true)
+                }
+    }
+
+    fun clientCommand(update: Update) {
+        addMessage(update)
+        forwardMessage(telegramBotProperties.chatid, update.message.chatId, update.message.messageId)
     }
 
 }

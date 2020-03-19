@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
-import java.util.stream.Collectors
 
 @Service
 class ParserService(
@@ -23,14 +22,14 @@ class ParserService(
 
     fun getEpisodeWrapper(mediaName: String, caption: String): Path =
             Optional.ofNullable(
-                    parserConfiguration.parser!!.entries
+                    parserConfiguration.filename!!.parser!!.entries
                             .filter { entry -> entry.key.toRegex().matches(mediaName) }
                             .map { entry -> getEpisodeWrapper(entry.value, mediaName) }
                             .map { it.toPath(telegramCommonProperties.downloadpath) }
                             .firstOrNull()
             ).orElseGet{
                 Optional.ofNullable(
-                        parserConfiguration.parser!!.entries
+                        parserConfiguration.caption!!.parser!!.entries
                                 .filter { entry -> entry.key.toRegex().matches(caption) }
                                 .map { entry -> getCaptionWrapper(entry.value, mediaName, caption) }
                                 .map { it.toPath(telegramCommonProperties.downloadpath) }
