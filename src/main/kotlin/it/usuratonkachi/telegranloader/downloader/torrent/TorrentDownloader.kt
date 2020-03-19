@@ -9,7 +9,6 @@ import it.usuratonkachi.telegranloader.downloader.telegram.TDownloader
 import org.springframework.stereotype.Service
 import java.io.File
 import java.net.InetAddress
-import java.nio.file.Paths
 import java.util.stream.Collectors
 
 @Service

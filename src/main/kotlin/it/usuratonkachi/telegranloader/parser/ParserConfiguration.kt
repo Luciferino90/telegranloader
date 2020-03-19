@@ -10,6 +10,7 @@ class ParserConfiguration (
         var caption: ParserMapConfiguration? = null
 )
 
+
 class ParserMapConfiguration (
         var parser: Map<String, ConfigurationMapper>? = null
 )

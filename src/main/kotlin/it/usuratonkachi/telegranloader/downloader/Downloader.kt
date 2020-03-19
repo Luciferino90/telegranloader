@@ -9,11 +9,11 @@ import com.github.badoualy.telegram.tl.core.TLIntVector
 import it.usuratonkachi.telegranloader.api.AnsweringBotService
 import it.usuratonkachi.telegranloader.api.TelegramApiListener
 import it.usuratonkachi.telegranloader.config.Log
+import it.usuratonkachi.telegranloader.config.TelegramCommonProperties
 import it.usuratonkachi.telegranloader.downloader.jdownloader.JDownloader
 import it.usuratonkachi.telegranloader.downloader.telegram.TDownloader
 import it.usuratonkachi.telegranloader.downloader.torrent.TorrentDownloader
 import it.usuratonkachi.telegranloader.parser.ParserService
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
 import java.io.File
@@ -67,13 +67,11 @@ class DownloaderSelector(
         private val tDownloader: TDownloader,
         private val torrentDownloader: TorrentDownloader,
         private val answeringBotService: AnsweringBotService,
-        private val parserService: ParserService
+        private val parserService: ParserService,
+        private val telegramCommonProperties: TelegramCommonProperties
 ) {
 
     companion object: Log
-
-    @Value("\${telegram.dry.run:true}")
-    lateinit var dryRun: String
 
     fun reactorDownloader(client: TelegramClient, url: String): Mono<Void> {
         //  Has a Media?
@@ -93,20 +91,60 @@ class DownloaderSelector(
                 .filter { it.media != null && it.media is TLMessageMediaDocument }
                 .map { it.media }
                 .map { it as TLMessageMediaDocument to getFilename(it) }
-                .flatMap { mediaPathPair ->
-                    Mono.just(mediaPathPair)
-                            .doOnNext { answeringBotService.answer(message, "Download started for " + it.second, false) }
-                            .doOnNext { if (dryRun.toBoolean()) dryRun(it) else downloader(message, client, it.first, it.second) }
-                            .doOnNext { answeringBotService.answer(message, "Download finished for " + it.second, false) }
-                            .doOnNext { deleteRequest(client, message) }
-                            .doOnNext { answeringBotService.answer(message, "Clean up finished for " + it.second, true) }
-                            .doOnError {
-                                val errorMsg = "Exception occurred during download for ${mediaPathPair.second} ${it.message}"
-                                TelegramApiListener.logger().error(errorMsg, it)
-                                answeringBotService.answer(message, errorMsg, true)
-                            }
-                }
+                .flatMap { dispatcher(message, client, it) }
                 .doOnError { TelegramApiListener.logger().error("Exception occurred during retrieve of media filename ${it.message}", it) }
+    }
+
+
+    private fun getFilename(media: TLMessageMediaDocument): Path =
+            parserService.getEpisodeWrapper(media)
+
+    private fun deleteRequest(client: TelegramClient, message: TLMessage) {
+        val vector = TLIntVector()
+        vector.add(message.id)
+        client.messagesDeleteMessages(true, vector)
+        TelegramApiListener.logger().debug("Delete Message Done")
+    }
+
+    private fun dispatcher(message: TLMessage, client: TelegramClient, mediaPathPair: Pair<TLMessageMediaDocument, Path>): Mono<Pair<TLMessageMediaDocument, Path>> {
+        return if (!telegramCommonProperties.isDryRun()) download(message, client, mediaPathPair) else generatePathPrediction(message, client, mediaPathPair)
+
+    }
+
+    private fun download(message: TLMessage, client: TelegramClient, mediaPathPair: Pair<TLMessageMediaDocument, Path>): Mono<Pair<TLMessageMediaDocument, Path>> {
+        return Mono.just(mediaPathPair)
+                .doOnNext { answeringBotService.answer(message, "Download started for " + it.second, false) }
+                .doOnNext { downloader(message, client, it.first, it.second) }
+                .doOnNext { answeringBotService.answer(message, "Download finished for " + it.second, false) }
+                .doOnNext { deleteRequest(client, message) }
+                .doOnNext { answeringBotService.answer(message, "Clean up finished for " + it.second, true) }
+                .doOnError {
+                    val errorMsg = "Exception occurred during download for ${mediaPathPair.second} ${it.message}"
+                    TelegramApiListener.logger().error(errorMsg, it)
+                    answeringBotService.answer(message, errorMsg, true)
+                }
+    }
+
+    private fun generatePathPrediction(message: TLMessage, client: TelegramClient, mediaPathPair: Pair<TLMessageMediaDocument, Path>): Mono<Pair<TLMessageMediaDocument, Path>> {
+        return Mono.just(mediaPathPair)
+                .doOnNext { generatePathPrediction(message, it) }
+                .doOnNext { deleteRequest(client, message) }
+                .doOnError {
+                    val errorMsg = "Exception occurred during download for ${mediaPathPair.second} ${it.message}"
+                    TelegramApiListener.logger().error(errorMsg, it)
+                    answeringBotService.answer(message, errorMsg, true)
+                }
+    }
+
+    private fun generatePathPrediction(message: TLMessage, mediaPathPair: Pair<TLMessageMediaDocument, Path>) {
+        val log = """
+            filename: ${mediaPathPair.first.document.asDocument.attributes.filterIsInstance<TLDocumentAttributeFilename>().last().fileName}
+            caption: ${mediaPathPair.first.caption.replace("\n", "")}
+            calculated: ${mediaPathPair.second}
+            
+            """.trimIndent()
+        logger().info(log)
+        answeringBotService.answer(message, log, true)
     }
 
     // Torrent and Media file
@@ -121,27 +159,6 @@ class DownloaderSelector(
     // magnet example: magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c&dn=Big+Buck+Bunny&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fbig-buck-bunny.torrent
     private fun downloader(message: TLMessage, client: TelegramClient, url: String, outputPath: Path) {
         jDownloader.download(message, client, url, outputPath)
-    }
-
-    private fun getFilename(media: TLMessageMediaDocument): Path =
-            parserService.getEpisodeWrapper(media)
-
-    private fun deleteRequest(client: TelegramClient, message: TLMessage) {
-        val vector = TLIntVector()
-        vector.add(message.id)
-        client.messagesDeleteMessages(true, vector)
-        TelegramApiListener.logger().debug("Delete Message Done")
-    }
-
-    private fun dryRun(mediaPathPair: Pair<TLMessageMediaDocument, Path>) {
-        println("""
-            filename: ${mediaPathPair.first.document.asDocument.attributes.filterIsInstance<TLDocumentAttributeFilename>().last().fileName}
-            caption: ${mediaPathPair.first.caption.replace("\n", "")}
-            calculate: ${mediaPathPair.second}
-            
-            """.trimIndent()
-        )
-        println()
     }
 
 }
