@@ -53,6 +53,10 @@ class TelegramApiListener(
             messageQueue.add(MessageWrapper(messageString = message.message, client = client))
     }
 
+    // TODO
+    // Episode: (((updates.updates[0] as TLUpdateNewMessage).message as TLMessage).media as TLMessageMediaDocument).caption
+    // Series:
+
     override fun onUpdates(client: TelegramClient, updates: TLUpdates) {
         Flux.fromStream(updates.updates.stream())
                 .filter { it is TLUpdateNewMessage }
