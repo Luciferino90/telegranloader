@@ -1,23 +1,6 @@
 package it.usuratonkachi.telegranloader.downloader
 
-import com.github.badoualy.telegram.api.TelegramClient
-import com.github.badoualy.telegram.api.utils.getAbsMediaInput
-import com.github.badoualy.telegram.tl.api.TLDocumentAttributeFilename
-import com.github.badoualy.telegram.tl.api.TLMessage
-import com.github.badoualy.telegram.tl.api.TLMessageMediaDocument
-import com.github.badoualy.telegram.tl.core.TLIntVector
-import it.usuratonkachi.telegranloader.api.AnsweringBotService
-import it.usuratonkachi.telegranloader.api.TelegramApiListener
-import it.usuratonkachi.telegranloader.config.Log
-import it.usuratonkachi.telegranloader.config.TelegramCommonProperties
-import it.usuratonkachi.telegranloader.downloader.jdownloader.JDownloader
-import it.usuratonkachi.telegranloader.downloader.telegram.TDownloader
-import it.usuratonkachi.telegranloader.downloader.torrent.TorrentDownloader
-import it.usuratonkachi.telegranloader.parser.ParserService
-import org.springframework.stereotype.Service
-import reactor.core.publisher.Mono
-import java.io.File
-import java.nio.file.Path
+/*
 
 class Download(var client: TelegramClient, var outputFile: File, var url: String? = null, var media: TLMessageMediaDocument? = null, var message: TLMessage? = null)
 
@@ -63,12 +46,12 @@ abstract class Downloader(private val answeringBotService: AnsweringBotService) 
 
 @Service
 class DownloaderSelector(
-        private val jDownloader: JDownloader,
-        private val tDownloader: TDownloader,
-        private val torrentDownloader: TorrentDownloader,
-        private val answeringBotService: AnsweringBotService,
-        private val parserService: ParserService,
-        private val telegramCommonProperties: TelegramCommonProperties
+    private val jDownloader: JDownloader,
+    private val tDownloader: TDownloader,
+    private val torrentDownloader: TorrentDownloader,
+    private val answeringBotService: AnsweringBotService,
+    private val parserService: ParserService,
+    private val telegramCommonProperties: TelegramCommonProperties
 ) {
 
     companion object: Log
@@ -78,26 +61,27 @@ class DownloaderSelector(
         //      Media has mime torrent  -> Torrent Downloader
         //      Media has others media  -> Telegram Downloader
         return Mono.just(url)
-                .map { downloader(TLMessage(), client,  url, Path.of("")) }
-                .doOnError { TelegramApiListener.logger().error("Exception occurred during retrieve of media url $url", it) }
-                .then()
+            .map { downloader(TLMessage(), client,  url, Path.of("")) }
+            .doOnError { TelegramApiListener.logger().error("Exception occurred during retrieve of media url $url", it) }
+            .then()
     }
 
-    fun reactorDownloader(client: TelegramClient, message: TLMessage): Mono<Pair<TLMessageMediaDocument, Path>> {
+    fun reactorDownloader(client: TelegramClient, messageWrapper: MessageWrapper): Mono<Pair<TLMessageMediaDocument, Path>> {
         //  Has a Media?
         //      Media has mime torrent  -> Torrent Downloader
         //      Media has others media  -> Telegram Downloader
-        return Mono.just(message)
-                .filter { it.media != null && it.media is TLMessageMediaDocument }
-                .map { it.media }
-                .map { it as TLMessageMediaDocument to getFilename(it) }
-                .flatMap { dispatcher(message, client, it) }
-                .doOnError { TelegramApiListener.logger().error("Exception occurred during retrieve of media filename ${it.message}", it) }
+        return Mono.just(messageWrapper)
+            .map { it.message!! }
+            .filter { it.media != null && it.media is TLMessageMediaDocument }
+            .map { it.media }
+            .map { it as TLMessageMediaDocument to getFilename(it, messageWrapper.episode!!) }
+            .flatMap { dispatcher(messageWrapper.message!!, client, it) }
+            .doOnError { TelegramApiListener.logger().error("Exception occurred during retrieve of media filename ${it.message}", it) }
     }
 
 
-    private fun getFilename(media: TLMessageMediaDocument): Path =
-            parserService.getEpisodeWrapper(media)
+    private fun getFilename(media: TLMessageMediaDocument, caption: String): Path =
+        parserService.getEpisodeWrapper(media, caption)
 
     private fun deleteRequest(client: TelegramClient, message: TLMessage) {
         val vector = TLIntVector()
@@ -112,27 +96,27 @@ class DownloaderSelector(
 
     private fun download(message: TLMessage, client: TelegramClient, mediaPathPair: Pair<TLMessageMediaDocument, Path>): Mono<Pair<TLMessageMediaDocument, Path>> {
         return Mono.just(mediaPathPair)
-                .doOnNext { answeringBotService.answer(message, "Download started for " + it.second, false) }
-                .doOnNext { downloader(message, client, it.first, it.second) }
-                .doOnNext { answeringBotService.answer(message, "Download finished for " + it.second, false) }
-                .doOnNext { deleteRequest(client, message) }
-                .doOnNext { answeringBotService.answer(message, "Clean up finished for " + it.second, true) }
-                .doOnError {
-                    val errorMsg = "Exception occurred during download for ${mediaPathPair.second} ${it.message}"
-                    TelegramApiListener.logger().error(errorMsg, it)
-                    answeringBotService.answer(message, errorMsg, true)
-                }
+            .doOnNext { answeringBotService.answer(message, "Download started for " + it.second, false) }
+            .doOnNext { downloader(message, client, it.first, it.second) }
+            .doOnNext { answeringBotService.answer(message, "Download finished for " + it.second, false) }
+            .doOnNext { deleteRequest(client, message) }
+            .doOnNext { answeringBotService.answer(message, "Clean up finished for " + it.second, true) }
+            .doOnError {
+                val errorMsg = "Exception occurred during download for ${mediaPathPair.second} ${it.message}"
+                TelegramApiListener.logger().error(errorMsg, it)
+                answeringBotService.answer(message, errorMsg, true)
+            }
     }
 
     private fun generatePathPrediction(message: TLMessage, client: TelegramClient, mediaPathPair: Pair<TLMessageMediaDocument, Path>): Mono<Pair<TLMessageMediaDocument, Path>> {
         return Mono.just(mediaPathPair)
-                .doOnNext { generatePathPrediction(message, it) }
-                .doOnNext { deleteRequest(client, message) }
-                .doOnError {
-                    val errorMsg = "Exception occurred during download for ${mediaPathPair.second} ${it.message}"
-                    TelegramApiListener.logger().error(errorMsg, it)
-                    answeringBotService.answer(message, errorMsg, true)
-                }
+            .doOnNext { generatePathPrediction(message, it) }
+            .doOnNext { deleteRequest(client, message) }
+            .doOnError {
+                val errorMsg = "Exception occurred during download for ${mediaPathPair.second} ${it.message}"
+                TelegramApiListener.logger().error(errorMsg, it)
+                answeringBotService.answer(message, errorMsg, true)
+            }
     }
 
     private fun generatePathPrediction(message: TLMessage, mediaPathPair: Pair<TLMessageMediaDocument, Path>) {
@@ -161,3 +145,4 @@ class DownloaderSelector(
     }
 
 }
+*/

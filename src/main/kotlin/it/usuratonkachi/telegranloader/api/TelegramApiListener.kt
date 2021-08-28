@@ -1,20 +1,8 @@
 package it.usuratonkachi.telegranloader.api
 
-import com.github.badoualy.telegram.api.TelegramClient
-import com.github.badoualy.telegram.api.UpdateCallback
-import com.github.badoualy.telegram.tl.api.*
-import it.usuratonkachi.telegranloader.config.Log
-import it.usuratonkachi.telegranloader.config.TelegramCommonProperties
-import it.usuratonkachi.telegranloader.downloader.DownloaderSelector
-import org.springframework.stereotype.Component
-import reactor.core.Disposable
-import reactor.core.publisher.Flux
-import reactor.core.publisher.SynchronousSink
-import reactor.util.concurrent.Queues
-import java.time.Duration
+/*
 
-
-class MessageWrapper(var message: TLMessage? = null, var client: TelegramClient, var messageString: String? = null)
+class MessageWrapper(var message: TLMessage? = null, var client: TelegramClient, var messageString: String? = null, var episode: String? = null)
 
 @Component
 class TelegramApiListener(
@@ -33,7 +21,7 @@ class TelegramApiListener(
                     sink.error(RuntimeException())
                 }
             }
-            .flatMap { if (it.message != null) downloaderSelector.reactorDownloader(it.client, it.message!!) else downloaderSelector.reactorDownloader(it.client, it.messageString!!) }
+            .flatMap { if (it.message != null) downloaderSelector.reactorDownloader(it.client, it) else downloaderSelector.reactorDownloader(it.client, it.messageString!!) }
             .doOnError { ex ->
                 if (ex !is java.lang.RuntimeException)
                     ex.printStackTrace()
@@ -63,7 +51,7 @@ class TelegramApiListener(
                 .map { it as TLUpdateNewMessage }
                 .map { it.message as TLMessage }
                 .filter { telegramCommonProperties.owners.contains(it.fromId) }
-                .map { MessageWrapper(message = it, client = client) }
+                .map { MessageWrapper(message = it, client = client, episode = (it.media as TLMessageMediaDocument).caption) }
                 .doOnNext { messageQueue.add(it) }
                 .subscribe()
     }
@@ -89,3 +77,4 @@ class TelegramApiListener(
     }
 
 }
+*/

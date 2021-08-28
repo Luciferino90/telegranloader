@@ -1,16 +1,6 @@
 package it.usuratonkachi.telegranloader.api
 
-import com.github.badoualy.telegram.api.TelegramApiStorage
-import com.github.badoualy.telegram.mtproto.auth.AuthKey
-import com.github.badoualy.telegram.mtproto.model.DataCenter
-import com.github.badoualy.telegram.mtproto.model.MTSession
-import org.apache.commons.io.FileUtils
-import org.jetbrains.annotations.NotNull
-import org.springframework.lang.Nullable
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.IOException
-import java.nio.charset.Charset
+/*
 
 class ApiStorage : TelegramApiStorage {
 
@@ -77,3 +67,4 @@ class ApiStorage : TelegramApiStorage {
         val NEAREST_DC_FILE = File("Properties/dc.save")
     }
 }
+*/

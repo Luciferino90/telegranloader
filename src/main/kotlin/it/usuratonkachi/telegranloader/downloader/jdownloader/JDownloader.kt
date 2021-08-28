@@ -1,12 +1,6 @@
 package it.usuratonkachi.telegranloader.downloader.jdownloader
 
-import it.usuratonkachi.telegranloader.api.AnsweringBotService
-import it.usuratonkachi.telegranloader.downloader.Download
-import it.usuratonkachi.telegranloader.downloader.Downloader
-import org.goots.jdownloader.JDownloader
-import org.springframework.stereotype.Service
-import java.nio.file.Paths
-import java.util.*
+/*
 
 @Service
 class JDownloader(answeringBotService: AnsweringBotService) : Downloader(answeringBotService) {
@@ -18,3 +12,4 @@ class JDownloader(answeringBotService: AnsweringBotService) : Downloader(answeri
     }
 
 }
+*/

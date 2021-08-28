@@ -1,12 +1,6 @@
 package it.usuratonkachi.telegranloader.parser
 
-import com.github.badoualy.telegram.tl.api.TLDocumentAttributeFilename
-import com.github.badoualy.telegram.tl.api.TLMessageMediaDocument
-import it.usuratonkachi.telegranloader.config.TelegramCommonProperties
-import org.springframework.stereotype.Service
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.util.*
+/*
 
 @Service
 class ParserService(
@@ -14,10 +8,11 @@ class ParserService(
         private val parserConfiguration: ParserConfiguration
 ) {
 
-    fun getEpisodeWrapper(media: TLMessageMediaDocument): Path {
+    fun getEpisodeWrapper(media: TLMessageMediaDocument, caption: String): Path {
         val filename: String = media.document.asDocument.attributes.filterIsInstance<TLDocumentAttributeFilename>().last().fileName
-        val caption = media.caption.replace("\n", "")
-        return getEpisodeWrapper(filename, caption)
+        val _caption = media.caption.replace("\n", "")
+        val p = getEpisodeWrapper(filename, _caption)
+        return p
     }
 
     fun getEpisodeWrapper(mediaName: String, caption: String): Path =
@@ -69,3 +64,4 @@ class EpisodeWrapper(
 
     fun toPath(rootPath: String): Path = Paths.get(rootPath, this.series, "Season ${this.season}", toString())
 }
+*/
