@@ -15,7 +15,7 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage
 import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession
-import java.util.*
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import javax.annotation.PostConstruct
 
@@ -23,8 +23,8 @@ import javax.annotation.PostConstruct
 @Component
 @ConditionalOnMissingBean(TelegramWebhookBot::class)
 class TelegramBotPolling(
-        private var telegramCommonProperties: TelegramCommonProperties,
-        private var telegramBotProperties: TelegramBotProperties
+    private var telegramCommonProperties: TelegramCommonProperties,
+    private var telegramBotProperties: TelegramBotProperties
 ) : TelegramLongPollingBot(), AnsweringBot {
 
     companion object: Log
@@ -49,7 +49,7 @@ class TelegramBotPolling(
     override fun onUpdateReceived(update: Update?) {
         update?.let {
             it.takeIf { telegramCommonProperties.owners.contains(it.message.from.id.toInt()) }
-                    ?.apply { dispatcherMessage(this) }
+                ?.apply { dispatcherMessage(this) }
         }
     }
 
@@ -87,12 +87,20 @@ class TelegramBotPolling(
     }
 
     fun botCommand(update: Update) {
-        update.message.text.takeIf { it.startsWith("/dryrun") }
-                ?.apply {
-                    val dryRun = this.replace("/dryrun", "").trim().toBoolean()
-                    telegramCommonProperties.setDryRun(dryRun)
-                    answerMessage(update, "DryRun is $dryRun", true)
-                }
+        val command: String = update.message.text
+        if (!command.startsWith("/")) return
+        when(command.replace("/", "").split(" ")[0]) {
+            "dryrun" -> {
+                val dryRun = command.replace("/dryrun", "").trim().toBoolean()
+                telegramCommonProperties.setDryRun(dryRun)
+                answerMessage(update, "DryRun is $dryRun", true)
+            }
+            "clean" -> {
+                Path.of("tdlib/").toFile()
+                    .listFiles { folder -> folder.isDirectory }
+                    ?.forEach { folder -> folder.deleteRecursively() }
+            }
+        }
     }
 
     fun clientCommand(update: Update) {

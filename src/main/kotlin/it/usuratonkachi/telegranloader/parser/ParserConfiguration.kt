@@ -16,11 +16,10 @@ class ParserMapConfiguration (
 )
 
 class ConfigurationMapper(
-        var logicalName: String? = null,
-        var type: String? = null,
-        var filename: Element? = null,
-        var season: Element? = null,
-        var episode: Element? = null
+    var type: String? = null,
+    var filename: Element? = null,
+    var season: Element? = null,
+    var episode: Element? = null
 ) {
     fun calculateFilename(mediaName: String) : String {
         return filename!!.calculateFilename(mediaName)

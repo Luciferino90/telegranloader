@@ -42,8 +42,6 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	implementation("commons-io:commons-io:2.5")
-	/*implementation("com.github.badoualy.kotlogram:api:1.0.0-RC3")*/
-	implementation("org.telegram:telegramapi:66.2")
 	implementation("org.telegram:telegrambots:5.3.0")
 	implementation("org.projectlombok:lombok")
 	implementation("org.goots:jdownloader:0.3")

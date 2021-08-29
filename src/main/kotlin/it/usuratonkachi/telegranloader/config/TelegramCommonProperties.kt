@@ -1,7 +1,6 @@
 package it.usuratonkachi.telegranloader.config
 
 import org.springframework.boot.context.properties.ConfigurationProperties
-import javax.annotation.PostConstruct
 
 @ConfigurationProperties(prefix = "telegram.common")
 class TelegramCommonProperties {
