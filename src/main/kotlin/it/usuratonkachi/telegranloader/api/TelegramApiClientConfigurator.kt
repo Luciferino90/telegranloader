@@ -4,6 +4,7 @@ import it.tdlight.common.TelegramClient
 import it.tdlight.jni.TdApi
 import it.usuratonkachi.telegranloader.api.handlers.ErrorHandler
 import it.usuratonkachi.telegranloader.api.handlers.UpdateHandler
+import it.usuratonkachi.telegranloader.config.TelegramApiProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.io.IOError
@@ -14,7 +15,8 @@ import java.io.IOException
 class TelegramApiClientConfigurator(
     private val client: TelegramClient,
     private val updateHandler: UpdateHandler,
-    private val errorHandler: ErrorHandler
+    private val errorHandler: ErrorHandler,
+    private val telegramApiProperties: TelegramApiProperties
 ) {
 
     @Bean
@@ -26,7 +28,7 @@ class TelegramApiClientConfigurator(
         if (client.execute(
                 TdApi.SetLogStream(
                     TdApi.LogStreamFile(
-                        "tdlib.log",
+                        telegramApiProperties.tdlibLog,
                         1000,
                         false
                     )

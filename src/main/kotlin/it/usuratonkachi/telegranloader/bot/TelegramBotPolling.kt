@@ -3,6 +3,7 @@ package it.usuratonkachi.telegranloader.bot
 import it.usuratonkachi.telegranloader.config.AnsweringBot
 import it.usuratonkachi.telegranloader.config.Log
 import it.usuratonkachi.telegranloader.config.TelegramCommonProperties
+import it.usuratonkachi.telegranloader.service.TdlibDatabaseCleanerService
 import lombok.extern.slf4j.Slf4j
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.stereotype.Component
@@ -15,7 +16,6 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage
 import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession
-import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import javax.annotation.PostConstruct
 
@@ -24,7 +24,8 @@ import javax.annotation.PostConstruct
 @ConditionalOnMissingBean(TelegramWebhookBot::class)
 class TelegramBotPolling(
     private var telegramCommonProperties: TelegramCommonProperties,
-    private var telegramBotProperties: TelegramBotProperties
+    private var telegramBotProperties: TelegramBotProperties,
+    private var tdlibDatabaseCleanerService: TdlibDatabaseCleanerService
 ) : TelegramLongPollingBot(), AnsweringBot {
 
     companion object: Log
@@ -95,11 +96,7 @@ class TelegramBotPolling(
                 telegramCommonProperties.setDryRun(dryRun)
                 answerMessage(update, "DryRun is $dryRun", true)
             }
-            "clean" -> {
-                Path.of("tdlib/").toFile()
-                    .listFiles { folder -> folder.isDirectory }
-                    ?.forEach { folder -> folder.deleteRecursively() }
-            }
+            "clean" -> tdlibDatabaseCleanerService.cleanDatabase()
         }
     }
 

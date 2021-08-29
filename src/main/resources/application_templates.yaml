@@ -17,6 +17,8 @@ telegram:
     system_version: SysVer
     language_code: en
     phone_number: +000000000000
+    database_path: /tmp
+    tdlib_log: /tmp/tdlib.log
   bot:
     username: telegranLoaderBot
     token: 0123456:asbcdefghijkl

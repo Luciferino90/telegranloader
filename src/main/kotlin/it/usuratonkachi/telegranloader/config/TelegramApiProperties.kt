@@ -14,5 +14,7 @@ class TelegramApiProperties {
     lateinit var systemVersion: String
     lateinit var languageCode: String
     lateinit var phoneNumber: String
+    lateinit var databasePath: String
+    lateinit var tdlibLog: String
 
 }
