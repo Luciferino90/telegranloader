@@ -24,7 +24,7 @@ class TorrentDownloader(
             .stream()
             .limit(outputFile.absolutePath.split(".").size - 1L).collect(Collectors.joining("."))
         )
-        outputFolder.mkdirs()
+        outputFolder.parentFile.mkdirs()
         val client = Client(InetAddress.getLocalHost(), SharedTorrent.fromFile(outputFile, outputFolder))
         client.download()
         client.waitForCompletion()

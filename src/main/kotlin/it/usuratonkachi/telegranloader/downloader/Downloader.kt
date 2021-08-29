@@ -3,7 +3,6 @@
 package it.usuratonkachi.telegranloader.downloader
 
 import it.tdlight.common.TelegramClient
-import it.tdlight.jni.TdApi
 import it.usuratonkachi.telegranloader.api.AnsweringBotService
 import it.usuratonkachi.telegranloader.api.TelegramClientService
 import it.usuratonkachi.telegranloader.config.Log
@@ -16,7 +15,6 @@ import it.usuratonkachi.telegranloader.wrapper.DownloadType
 import it.usuratonkachi.telegranloader.wrapper.DownloadWrapper
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
-import java.io.File
 import java.nio.file.Path
 
 abstract class Downloader(private val answeringBotService: AnsweringBotService) {

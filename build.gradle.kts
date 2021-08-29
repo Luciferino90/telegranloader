@@ -14,7 +14,7 @@ apply(plugin = "application")
 
 
 group = "it.usuratonkachi"
-version = "1.0"
+version = "2.0"
 java.sourceCompatibility = JavaVersion.VERSION_16
 
 repositories {
