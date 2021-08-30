@@ -50,13 +50,9 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test") {
 		exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
 	}
-
 	implementation("it.tdlight:tdlib-java:1.7.6.5")
-	if (io.spring.gradle.dependencymanagement.org.codehaus.plexus.interpolation.os.Os.isFamily(io.spring.gradle.dependencymanagement.org.codehaus.plexus.interpolation.os.Os.FAMILY_WINDOWS)) {
-		implementation("it.tdlight:tdlib-natives-windows-amd64:3.3.74")
-	} else {
-		implementation("it.tdlight:tdlib-natives-linux-armv7:3.3.74")
-	}
+	implementation("it.tdlight:tdlib-natives-windows-amd64:3.3.74")
+	implementation("it.tdlight:tdlib-natives-linux-armv7:3.3.74")
 
 }
 

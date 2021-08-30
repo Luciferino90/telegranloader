@@ -22,6 +22,7 @@ class TorrentDownloader(
 
     override fun download(downloadWrapper: DownloadWrapper) {
         tDownloader.download(downloadWrapper, TorrentDownloadHandler(downloadWrapper, answeringBotService))
+        downloadWrapper.countDownLatch.await()
     }
 
     private class TorrentDownloadHandler(private var downloadWrapper: DownloadWrapper, private var answeringBotService: AnsweringBotService)
@@ -64,6 +65,7 @@ class TorrentDownloader(
                             "Clean up finished for " + downloadWrapper.outputPath,
                             true
                         )
+                        downloadWrapper.countDownLatch.countDown()
                     } catch (ex: Exception) {
                         val errorMsg = "Exception occurred during download for ${downloadWrapper.outputPath} ${ex.message}"
                         logger().error(errorMsg, ex)

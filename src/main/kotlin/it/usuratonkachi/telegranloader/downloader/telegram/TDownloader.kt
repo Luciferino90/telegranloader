@@ -11,6 +11,8 @@ import it.usuratonkachi.telegranloader.wrapper.DownloadWrapper
 import org.springframework.stereotype.Service
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicInteger
 
 @Service
 class TDownloader(
@@ -32,9 +34,12 @@ class TDownloader(
             0,
             true
         ), downloadHandler)
+        downloadWrapper.countDownLatch.await()
     }
 
-    private class TelegramDownloadHandler(private var downloadWrapper: DownloadWrapper, private var answeringBotService: AnsweringBotService)
+    private class TelegramDownloadHandler(
+        private var downloadWrapper: DownloadWrapper,
+        private var answeringBotService: AnsweringBotService)
         : DownloadHandler
     {
         companion object : Log
@@ -60,6 +65,7 @@ class TDownloader(
                             "Clean up finished for " + downloadWrapper.outputPath,
                             true
                         )
+                        downloadWrapper.countDownLatch.countDown()
                     } catch (ex: Exception) {
                         val errorMsg = "Exception occurred during download for ${downloadWrapper.outputPath} ${ex.message}"
                         logger().error(errorMsg, ex)
