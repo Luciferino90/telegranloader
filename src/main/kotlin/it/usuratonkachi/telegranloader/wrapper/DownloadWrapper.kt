@@ -10,8 +10,9 @@ class DownloadWrapper(
     val expectedSize: Int?,
     val caption: String?,
     val filename: String?,
+    val fileId: Int,
     val mediaContent: TdApi.MessageContent?,
-    val message: String?,
+    val message: String,
     val downloadType: DownloadType,
     var outputPath: Path?,
     var mimeType: String?

@@ -72,6 +72,7 @@ class DownloaderSelector(
             //      Media has others media  -> Telegram Downloader
             DownloadType.URL -> Mono.just(downloadWrapper)
                 .doOnNext { it.message!! }
+                .doOnNext{ it.outputPath = getFilename(it) }
                 .map { downloader(it) }
                 .doOnError { TelegramClientService.logger().error("Exception occurred during retrieve of media url ${it.message}", it) }
                 .then()
@@ -89,7 +90,6 @@ class DownloaderSelector(
         return Mono.just(downloadWrapper)
             .doOnNext { answeringBotService.answer(it, "Download started for " + it.outputPath, false) }
             .doOnNext { downloader(it) }
-            .doOnNext { answeringBotService.answer(it, "Download requested for " + it.outputPath, false) }
     }
 
     private fun generatePathPrediction(downloadWrapper: DownloadWrapper): Mono<DownloadWrapper> {
@@ -117,7 +117,11 @@ class DownloaderSelector(
     // Torrent and Media file
     private fun downloader(downloadWrapper: DownloadWrapper) {
         when (downloadWrapper.downloadType) {
-            DownloadType.URL -> jDownloader.dispatchDownload(downloadWrapper)
+            DownloadType.URL ->
+                if (downloadWrapper.message.startsWith("magnet:"))
+                    torrentDownloader.dispatchDownload(downloadWrapper)
+                else
+                    jDownloader.dispatchDownload(downloadWrapper)
             DownloadType.FILE -> when (downloadWrapper.mimeType) {
                 "application/x-bittorrent" -> torrentDownloader.dispatchDownload(downloadWrapper)
                 else -> tDownloader.dispatchDownload(downloadWrapper)

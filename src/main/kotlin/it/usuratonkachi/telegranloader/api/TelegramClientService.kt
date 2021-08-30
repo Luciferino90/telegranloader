@@ -78,39 +78,77 @@ class TelegramClientService(
                 val date: Int = message.forwardInfo?.date ?: message.date
                 val content : TdApi.MessageContent = message.content
 
-                if (content is TdApi.MessageVideo) {
-                    val video : TdApi.MessageVideo = message.content as TdApi.MessageVideo
-                    val caption: String = video.caption.text
-                    val filename: String = video.video.fileName
-                    val expectedSize : Int = video.video.video.expectedSize
-                    DownloadWrapper(
-                        chatId,
-                        messageId,
-                        date,
-                        expectedSize,
-                        caption,
-                        filename,
-                        video,
-                        "",
-                        DownloadType.FILE,
-                        null,
-                        null
-                    )
-                } else {
-                    // TODO ME
-                    DownloadWrapper(
-                        chatId,
-                        messageId,
-                        0,
-                        null,
-                        null,
-                        null,
-                        null,
-                        "",
-                        DownloadType.FILE,
-                        null,
-                        null
-                    )
+                when (content) {
+                    is TdApi.MessageVideo -> {
+                        val video : TdApi.MessageVideo = message.content as TdApi.MessageVideo
+                        val caption: String = video.caption.text
+                        val filename: String = video.video.fileName
+                        val expectedSize : Int = video.video.video.expectedSize
+                        DownloadWrapper(
+                            chatId,
+                            messageId,
+                            date,
+                            expectedSize,
+                            caption,
+                            filename,
+                            video.video.video.id,
+                            video,
+                            "",
+                            DownloadType.FILE,
+                            null,
+                            null
+                        )
+                    }
+                    is TdApi.MessageDocument -> {
+                        DownloadWrapper(
+                            chatId,
+                            messageId,
+                            date,
+                            content.document.document.size,
+                            content.document.fileName,
+                            content.document.fileName,
+                            content.document.document.id,
+                            content,
+                            content.document.fileName,
+                            DownloadType.FILE,
+                            null,
+                            content.document.mimeType
+                        )
+                    }
+                    is TdApi.MessageText -> {
+                        val text: String = content.text.text
+                        val fallbackText: String = text.replace(":", "_").replace("?", "-")
+                        DownloadWrapper(
+                            chatId,
+                            messageId,
+                            date,
+                            null,
+                            content.webPage?.document?.fileName ?: fallbackText,
+                            content.webPage?.document?.fileName ?: fallbackText,
+                            -1,
+                            null,
+                            content.webPage?.url ?: text,
+                            DownloadType.URL,
+                            null,
+                            content.webPage?.document?.mimeType
+                        )
+                    }
+                    else -> {
+                        DownloadWrapper(
+                            chatId,
+                            messageId,
+                            date,
+                            null,
+                            "",
+                            "",
+                            -1,
+                            null,
+                            "",
+                            DownloadType.URL,
+                            null,
+                            ""
+                        )
+                    }
                 }
             }
             .map { messageQueue.add(it) }

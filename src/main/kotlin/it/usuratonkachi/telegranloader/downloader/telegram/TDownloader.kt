@@ -4,6 +4,7 @@ import it.tdlight.common.ResultHandler
 import it.tdlight.common.TelegramClient
 import it.tdlight.jni.TdApi
 import it.usuratonkachi.telegranloader.api.AnsweringBotService
+import it.usuratonkachi.telegranloader.api.handlers.DownloadHandler
 import it.usuratonkachi.telegranloader.config.Log
 import it.usuratonkachi.telegranloader.downloader.Downloader
 import it.usuratonkachi.telegranloader.wrapper.DownloadWrapper
@@ -20,20 +21,24 @@ class TDownloader(
     companion object : Log
 
     override fun download(downloadWrapper: DownloadWrapper) {
-        downloadWrapper.outputPath!!.toFile().mkdirs()
+        download(downloadWrapper, TelegramDownloadHandler(downloadWrapper, answeringBotService))
+    }
+
+    fun download(downloadWrapper: DownloadWrapper, downloadHandler: DownloadHandler) {
         client.send(TdApi.DownloadFile(
-            (downloadWrapper.mediaContent as TdApi.MessageVideo).video.video.id,
+            downloadWrapper.fileId,
             1,
             0,
             0,
             true
-        ), DownloadHandler(downloadWrapper, answeringBotService))
+        ), downloadHandler)
     }
 
-    private class DownloadHandler(private var downloadWrapper: DownloadWrapper, private var answeringBotService: AnsweringBotService) : ResultHandler {
+    private class TelegramDownloadHandler(private var downloadWrapper: DownloadWrapper, private var answeringBotService: AnsweringBotService)
+        : DownloadHandler
+    {
         companion object : Log
         override fun onResult(tdApiObj: TdApi.Object) {
-            println(tdApiObj.toString())
             when(tdApiObj.constructor) {
                 TdApi.File.CONSTRUCTOR -> run {
                     try {

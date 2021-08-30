@@ -4,6 +4,7 @@ import it.tdlight.common.ResultHandler
 import it.tdlight.common.TelegramClient
 import it.tdlight.jni.TdApi
 import it.usuratonkachi.telegranloader.api.TelegramClientService
+import it.usuratonkachi.telegranloader.config.Log
 import it.usuratonkachi.telegranloader.config.TelegramApiProperties
 import it.usuratonkachi.telegranloader.service.TdlibDatabaseCleanerService
 import org.springframework.stereotype.Component
@@ -22,6 +23,8 @@ class UpdateHandler(
     private val tdlibDatabaseCleanerService: TdlibDatabaseCleanerService
 ) : ResultHandler {
 
+    companion object : Log
+
     @Volatile
     private var haveAuthorization = false
     private var newLine = System.getProperty("line.separator")
@@ -30,12 +33,14 @@ class UpdateHandler(
     private val gotAuthorization = authorizationLock.newCondition()
 
     override fun onResult(tdApiObj: TdApi.Object) {
-        println("${tdApiObj.constructor}: $tdApiObj")
+        if (logger().isDebugEnabled)
+            logger().debug("${tdApiObj.constructor}: $tdApiObj")
         when (tdApiObj.constructor) {
             TdApi.UpdateAuthorizationState.CONSTRUCTOR -> onAuthorizationStateUpdated((tdApiObj as TdApi.UpdateAuthorizationState).authorizationState)
             TdApi.UpdateNewMessage.CONSTRUCTOR -> telegramClientService.onUpdates(tdApiObj as TdApi.UpdateNewMessage)
             else -> {
-                println("${tdApiObj.constructor}: $tdApiObj")
+                if (logger().isDebugEnabled)
+                    logger().debug("${tdApiObj.constructor}: $tdApiObj")
             }
         }
     }

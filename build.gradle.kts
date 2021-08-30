@@ -52,8 +52,11 @@ dependencies {
 	}
 
 	implementation("it.tdlight:tdlib-java:1.7.6.5")
-	implementation("it.tdlight:tdlib-natives-windows-amd64:3.3.74")
-	/*implementation("it.tdlight:tdlib-natives-linux-armv7:3.3.74") For Raspberry */
+	if (io.spring.gradle.dependencymanagement.org.codehaus.plexus.interpolation.os.Os.isFamily(io.spring.gradle.dependencymanagement.org.codehaus.plexus.interpolation.os.Os.FAMILY_WINDOWS)) {
+		implementation("it.tdlight:tdlib-natives-windows-amd64:3.3.74")
+	} else {
+		implementation("it.tdlight:tdlib-natives-linux-armv7:3.3.74")
+	}
 
 }
 
