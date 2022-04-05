@@ -10,6 +10,7 @@ import it.usuratonkachi.telegranloader.wrapper.DownloadWrapper
 import org.springframework.stereotype.Service
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 @Service
 class TDownloader(
@@ -50,6 +51,9 @@ class TDownloader(
                             "Download finished for ${file.local.path}, moving into ${downloadWrapper.outputPath}",
                             true
                         )
+
+                        if (!downloadWrapper.outputPath!!.parent.exists())
+                            Files.createDirectories(downloadWrapper.outputPath!!.parent)
                         Files.move(Path.of(file.local.path), downloadWrapper.outputPath!!)
                         answeringBotService.answer(
                             downloadWrapper,
