@@ -1,4 +1,4 @@
-package it.usuratonkachi.telegranloader.api
+package it.usuratonkachi.telegranloader.config
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
@@ -14,5 +14,7 @@ class TelegramApiProperties {
     lateinit var systemVersion: String
     lateinit var languageCode: String
     lateinit var phoneNumber: String
+    lateinit var databasePath: String
+    lateinit var tdlibLog: String
 
 }

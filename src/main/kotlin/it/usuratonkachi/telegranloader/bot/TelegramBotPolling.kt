@@ -3,6 +3,7 @@ package it.usuratonkachi.telegranloader.bot
 import it.usuratonkachi.telegranloader.config.AnsweringBot
 import it.usuratonkachi.telegranloader.config.Log
 import it.usuratonkachi.telegranloader.config.TelegramCommonProperties
+import it.usuratonkachi.telegranloader.service.TdlibDatabaseCleanerService
 import lombok.extern.slf4j.Slf4j
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.stereotype.Component
@@ -14,7 +15,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage
 import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException
-import java.util.*
+import org.telegram.telegrambots.updatesreceivers.DefaultBotSession
 import java.util.concurrent.ConcurrentHashMap
 import javax.annotation.PostConstruct
 
@@ -22,8 +23,9 @@ import javax.annotation.PostConstruct
 @Component
 @ConditionalOnMissingBean(TelegramWebhookBot::class)
 class TelegramBotPolling(
-        private var telegramCommonProperties: TelegramCommonProperties,
-        private var telegramBotProperties: TelegramBotProperties
+    private var telegramCommonProperties: TelegramCommonProperties,
+    private var telegramBotProperties: TelegramBotProperties,
+    private var tdlibDatabaseCleanerService: TdlibDatabaseCleanerService
 ) : TelegramLongPollingBot(), AnsweringBot {
 
     companion object: Log
@@ -33,7 +35,7 @@ class TelegramBotPolling(
 
     @PostConstruct
     private fun init() {
-        val botsApi = TelegramBotsApi()
+        val botsApi = TelegramBotsApi(DefaultBotSession::class.java)
         try {
             botsApi.registerBot(this)
         } catch (e: TelegramApiException) {
@@ -47,8 +49,8 @@ class TelegramBotPolling(
 
     override fun onUpdateReceived(update: Update?) {
         update?.let {
-            it.takeIf { telegramCommonProperties.owners.contains(it.message.from.id) }
-                    ?.apply { dispatcherMessage(this) }
+            it.takeIf { telegramCommonProperties.owners.contains(it.message.from.id.toString()) }
+                ?.apply { dispatcherMessage(this) }
         }
     }
 
@@ -56,8 +58,8 @@ class TelegramBotPolling(
         if (update.message.text != null && update.message.text.startsWith("/")) botCommand(update) else clientCommand(update)
     }
 
-    private fun forwardMessage(chatId: String, fromChatId: Long, messageId: Int) {
-        val sendMessage = ForwardMessage(chatId, fromChatId, messageId)
+    private fun forwardMessage(chatId: Long, fromChatId: Long, messageId: Int) {
+        val sendMessage = ForwardMessage(chatId.toString(), fromChatId.toString(), messageId)
         execute(sendMessage)
     }
 
@@ -73,30 +75,34 @@ class TelegramBotPolling(
         answerMessage(update, response, remove)
     }
 
-    private fun deleteMessage(chatId: Long, messageId: Int){
+    private fun deleteMessage(chatId: String, messageId: Int){
         val deleteMessage = DeleteMessage(chatId, messageId)
         execute(deleteMessage)
     }
 
     fun answerMessage(update: Update, response: String, remove: Boolean){
-        val sendResponse = SendMessage(update.message.chatId, response)
+        val sendResponse = SendMessage(update.message.chatId.toString(), response)
         sendResponse.replyToMessageId = update.message.messageId
         execute(sendResponse)
-        if (remove) deleteMessage(update.message.chatId, update.message.messageId)
+        if (remove) deleteMessage(update.message.chatId.toString(), update.message.messageId)
     }
 
     fun botCommand(update: Update) {
-        update.message.text.takeIf { it.startsWith("/dryrun") }
-                ?.apply {
-                    val dryRun = this.replace("/dryrun", "").trim().toBoolean()
-                    telegramCommonProperties.setDryRun(dryRun)
-                    answerMessage(update, "DryRun is $dryRun", true)
-                }
+        val command: String = update.message.text
+        if (!command.startsWith("/")) return
+        when(command.replace("/", "").split(" ")[0]) {
+            "dryrun" -> {
+                val dryRun = command.replace("/dryrun", "").trim().toBoolean()
+                telegramCommonProperties.setDryRun(dryRun)
+                answerMessage(update, "DryRun is $dryRun", true)
+            }
+            "clean" -> tdlibDatabaseCleanerService.cleanDatabase()
+        }
     }
 
     fun clientCommand(update: Update) {
         addMessage(update)
-        forwardMessage(telegramBotProperties.chatid, update.message.chatId, update.message.messageId)
+        forwardMessage(telegramBotProperties.chatid.toLong(), update.message.chatId, update.message.messageId)
     }
 
 }

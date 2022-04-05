@@ -1,48 +1,44 @@
 package it.usuratonkachi.telegranloader.api
 
-import com.github.badoualy.telegram.api.Kotlogram
-import com.github.badoualy.telegram.api.TelegramApp
-import com.github.badoualy.telegram.api.TelegramClient
-import com.github.badoualy.telegram.tl.api.TLUser
-import com.github.badoualy.telegram.tl.api.auth.TLAuthorization
-import com.github.badoualy.telegram.tl.api.auth.TLSentCode
-import it.usuratonkachi.telegranloader.config.TelegramCommonProperties
-import org.springframework.stereotype.Component
-import java.util.*
-import javax.annotation.PostConstruct
+import it.tdlight.common.TelegramClient
+import it.tdlight.jni.TdApi
+import it.usuratonkachi.telegranloader.api.handlers.ErrorHandler
+import it.usuratonkachi.telegranloader.api.handlers.UpdateHandler
+import it.usuratonkachi.telegranloader.config.TelegramApiProperties
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import java.io.IOError
+import java.io.IOException
 
 
-@Component
+@Configuration
 class TelegramApiClientConfigurator(
-        private val telegramCommonProperties: TelegramCommonProperties,
-        private val telegramApiProperties: TelegramApiProperties,
-        private val telegramApiListener: TelegramApiListener
+    private val client: TelegramClient,
+    private val updateHandler: UpdateHandler,
+    private val errorHandler: ErrorHandler,
+    private val telegramApiProperties: TelegramApiProperties
 ) {
 
-    @PostConstruct
-    fun configureClient() {
-        val telegramApp: TelegramApp = TelegramApp(telegramApiProperties.apiId.toInt(),
-                telegramApiProperties.apiHash, telegramApiProperties.model, telegramApiProperties.systemVersion,
-                telegramApiProperties.appVersion, telegramApiProperties.languageCode)
+    @Bean
+    fun clientConfiguration() : TelegramClient {
+        // val updateHandler = UpdateHandler(client)
+        client.initialize(updateHandler, errorHandler, errorHandler)
+        client.execute(TdApi.SetLogVerbosityLevel(0))
+        // disable TDLib log
+        val o: TdApi.Object  = client.execute(
+            TdApi.SetLogStream(
+                TdApi.LogStreamFile(
+                    telegramApiProperties.tdlibLog,
+                    1000,
+                    false
+                )
+            )
+        )
 
-        val client: TelegramClient = Kotlogram.getDefaultClient(telegramApp, ApiStorage(), updateCallback = telegramApiListener)
-
-        try {
-            client.accountGetAuthorizations()
-        } catch (e: Exception) {
-            ifCodeIsRequired(client)
+        if (o is TdApi.Error) {
+            throw IOError(IOException("Write access to the current directory is required"))
         }
-
-    }
-
-    fun ifCodeIsRequired(client: TelegramClient) {
-        val sentCode: TLSentCode = client.authSendCode(false, telegramApiProperties.phoneNumber, true)
-        print("Authentication Code: ")
-        val code: String = Scanner(System.`in`).nextLine()
-
-        val authorization: TLAuthorization = client.authSignIn(telegramApiProperties.phoneNumber, sentCode.phoneCodeHash, code)
-        val self: TLUser = authorization.user.asUser
-        print("You are signed as ${self.firstName} ${self.lastName} @ ${self.username}")
+        return client
     }
 
 }

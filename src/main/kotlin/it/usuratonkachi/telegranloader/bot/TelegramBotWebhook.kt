@@ -1,16 +1,6 @@
 package it.usuratonkachi.telegranloader.bot
 
-import it.usuratonkachi.telegranloader.config.AnsweringBot
-import it.usuratonkachi.telegranloader.config.Log
-import it.usuratonkachi.telegranloader.config.TelegramCommonProperties
-import lombok.extern.slf4j.Slf4j
-import org.telegram.telegrambots.bots.TelegramWebhookBot
-import org.telegram.telegrambots.meta.TelegramBotsApi
-import org.telegram.telegrambots.meta.api.methods.BotApiMethod
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage
-import org.telegram.telegrambots.meta.api.objects.Update
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException
-import javax.annotation.PostConstruct
+/*
 
 @Slf4j
 //@Component
@@ -25,7 +15,7 @@ class TelegramBotWebhook(
     @PostConstruct
     private fun init() {
         logger().info("Bot started in " + this.javaClass.simpleName + " mode")
-        val botsApi = TelegramBotsApi()
+        val botsApi = TelegramBotsApi(DefaultBotSession::class.java)
         try {
             botsApi.registerBot(this)
         } catch (e: TelegramApiException) {
@@ -53,3 +43,4 @@ class TelegramBotWebhook(
     override fun answerMessage(key: Int, response: String, remove: Boolean): Nothing = run { throw RuntimeException("Not yet implemented on " + this.javaClass.simpleName) }
 
 }
+*/
