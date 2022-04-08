@@ -11,14 +11,25 @@ import java.util.*
 @Service
 class ParserService(
     private val telegramCommonProperties: TelegramCommonProperties,
-    private val parserConfiguration: ParserConfiguration
+    private val parserConfiguration: ParserConfiguration,
+    private val newParserConfiguration: NewParserConfiguration
 ) {
 
     fun getEpisodeWrapper(downloadWrapper: DownloadWrapper): Path {
         return getEpisodeWrapper(downloadWrapper.filename!!, downloadWrapper.caption!!)
     }
 
-    fun getEpisodeWrapper(mediaName: String, caption: String): Path =
+    fun getEpisodeWrapper(mediaName: String, caption: String): Path {
+        val fullName = caption + " " + mediaName
+        return newParserConfiguration.regexMap.entries
+            .filter{ it.key.toRegex().containsMatchIn(fullName.lowercase()) }
+            .map { it.value.calcolateFileName(telegramCommonProperties.downloadpath, fullName) }
+            .firstOrNull()
+            ?: Path.of(telegramCommonProperties.downloadpath, "others", mediaName)
+
+    }
+
+    fun _getEpisodeWrapper(mediaName: String, caption: String): Path =
             Optional.ofNullable(
                     parserConfiguration.filename!!.parser!!.entries
                             .filter { entry -> entry.key.toRegex().matches(mediaName) }
