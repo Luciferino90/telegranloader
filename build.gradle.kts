@@ -14,7 +14,7 @@ apply(plugin = "application")
 
 
 group = "it.usuratonkachi"
-version = "2.0.1"
+version = "2.0.2"
 java.sourceCompatibility = JavaVersion.VERSION_16
 
 repositories {
@@ -50,10 +50,6 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test") {
 		exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
 	}
-	//implementation("it.tdlight:tdlib-java:2.7.8.25")
-	//implementation("it.tdlight:tdlib-natives-windows-amd64:3.3.165")
-	//implementation("it.tdlight:tdlib-natives-linux-armv7:3.3.75")
-	//implementation("it.tdlight:tdlight-natives-linux-armhf:4.0.250")
 	implementation(platform("it.tdlight:tdlight-java-bom:2.8.2.2"))
 	implementation("it.tdlight:tdlight-java")
 	implementation("it.tdlight:tdlight-natives-linux-amd64")
