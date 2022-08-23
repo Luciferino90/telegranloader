@@ -25,6 +25,9 @@ repositories {
 	maven {
 		url = uri("https://mvn.mchv.eu/repository/mchv/")
 	}
+	maven {
+		url = uri("https://mvn.mchv.eu/repository/mchv/")
+	}
 }
 
 buildscript {
@@ -50,11 +53,11 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test") {
 		exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
 	}
-	implementation(platform("it.tdlight:tdlight-java-bom:2.8.2.2"))
-	implementation("it.tdlight:tdlight-java")
-	implementation("it.tdlight:tdlight-natives-linux-amd64")
-	implementation("it.tdlight:tdlight-natives-linux-armhf")
-	implementation("it.tdlight:tdlight-natives-windows-amd64")
+	implementation(platform("it.tdlight:tdlight-java-bom:2.8.2.2:2.8.4.3"))
+	implementation("it.tdlight:tdlight-java:2.8.4.3")
+	implementation("it.tdlight:tdlight-natives-linux-amd64:4.0.269")
+	implementation("it.tdlight:tdlight-natives-linux-armhf:4.0.269")
+	implementation("it.tdlight:tdlight-natives-windows-amd64::4.0.269")
 }
 
 tasks.withType<Test> {
