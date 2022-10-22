@@ -83,7 +83,7 @@ class TelegramClientService(
                         val video : TdApi.MessageVideo = message.content as TdApi.MessageVideo
                         val caption: String = video.caption.text
                         val filename: String = video.video.fileName
-                        val expectedSize : Int = video.video.video.expectedSize
+                        val expectedSize : Int = video.video.video.expectedSize.toInt()
                         DownloadWrapper(
                             chatId,
                             messageId,
@@ -104,7 +104,7 @@ class TelegramClientService(
                             chatId,
                             messageId,
                             date,
-                            content.document.document.size,
+                            content.document.document.size.toInt(),
                             content.document.fileName,
                             content.document.fileName,
                             content.document.document.id,
