@@ -13,6 +13,7 @@ import reactor.core.Disposable
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.publisher.SynchronousSink
+import reactor.core.scheduler.Schedulers
 import reactor.util.concurrent.Queues
 import java.time.Duration
 
@@ -42,6 +43,7 @@ class TelegramClientService(
         }
         .onErrorResume { Flux.empty() }
         .repeatWhen { it.delayElements(Duration.ofSeconds(1))}
+        .subscribeOn(Schedulers.boundedElastic())
         .subscribe()
 
     /*fun onShortMessage(client: TelegramClient, message: TLUpdateShortMessage) {
