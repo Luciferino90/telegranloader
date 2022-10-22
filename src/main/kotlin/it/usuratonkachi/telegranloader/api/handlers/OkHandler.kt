@@ -1,13 +1,15 @@
 package it.usuratonkachi.telegranloader.api.handlers
 
+import it.tdlight.client.TelegramError
 import it.tdlight.common.ResultHandler
 import it.tdlight.common.TelegramClient
 import it.tdlight.jni.TdApi
+import it.tdlight.jni.TdApi.SetTdlibParameters
 import it.usuratonkachi.telegranloader.api.TelegramClientService
 import it.usuratonkachi.telegranloader.config.Log
 import it.usuratonkachi.telegranloader.config.TelegramApiProperties
 import it.usuratonkachi.telegranloader.service.TdlibDatabaseCleanerService
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
@@ -15,8 +17,8 @@ import java.nio.file.Path
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 
-@Component
-open class OkHandler (
+@Service
+class OkHandler (
     private val client: TelegramClient,
     private val telegramApiProperties: TelegramApiProperties,
     private val telegramClientService: TelegramClientService,
@@ -44,7 +46,8 @@ open class OkHandler (
         when (authorizationState!!.constructor) {
             TdApi.AuthorizationStateWaitTdlibParameters.CONSTRUCTOR -> {
                 checkTdlibDatabase()
-                val parameters = TdApi.TdlibParameters()
+
+                val parameters = SetTdlibParameters()
                 parameters.databaseDirectory = telegramApiProperties.databasePath
                 parameters.useMessageDatabase = true
                 parameters.useSecretChats = false
@@ -55,9 +58,13 @@ open class OkHandler (
                 parameters.systemVersion = telegramApiProperties.systemVersion
                 parameters.applicationVersion = telegramApiProperties.appVersion
                 parameters.enableStorageOptimizer = true
-                client.send(TdApi.SetTdlibParameters(parameters)) { println("") }
+                client.send(parameters, { ok: TdApi.Object ->
+                    if (ok.constructor == TdApi.Error.CONSTRUCTOR) {
+                        throw TelegramError(ok as TdApi.Error)
+                    }
+                }, { it.printStackTrace() })
             }
-            TdApi.AuthorizationStateWaitEncryptionKey.CONSTRUCTOR -> client.send(TdApi.CheckDatabaseEncryptionKey()) { println("") }
+            //TdApi.AuthorizationStateWaitEncryptionKey.CONSTRUCTOR -> client.send(TdApi.CheckDatabaseEncryptionKey()) { println("") }
             TdApi.AuthorizationStateWaitPhoneNumber.CONSTRUCTOR -> { client.send(TdApi.SetAuthenticationPhoneNumber(telegramApiProperties.phoneNumber, null)) { println("") } }
             TdApi.AuthorizationStateWaitCode.CONSTRUCTOR -> {
                 val code = askAuthenticationCode()

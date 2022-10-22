@@ -1,5 +1,6 @@
 package it.usuratonkachi.telegranloader.api
 
+import ch.qos.logback.core.util.ContentTypeUtil
 import it.tdlight.jni.TdApi
 import it.usuratonkachi.telegranloader.config.Log
 import it.usuratonkachi.telegranloader.config.TelegramCommonProperties
@@ -7,6 +8,7 @@ import it.usuratonkachi.telegranloader.downloader.DownloaderSelector
 import it.usuratonkachi.telegranloader.wrapper.DownloadType
 import it.usuratonkachi.telegranloader.wrapper.DownloadWrapper
 import org.springframework.stereotype.Service
+import org.springframework.util.StringUtils
 import reactor.core.Disposable
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -82,7 +84,8 @@ class TelegramClientService(
                     is TdApi.MessageVideo -> {
                         val video : TdApi.MessageVideo = message.content as TdApi.MessageVideo
                         val caption: String = video.caption.text
-                        val filename: String = video.video.fileName
+                        val extension: String = ContentTypeUtil.getSubType("video/mp4")
+                        val filename: String = if ( StringUtils.hasText(video.video.fileName) ) video.video.fileName else caption + "." + extension
                         val expectedSize : Int = video.video.video.expectedSize.toInt()
                         DownloadWrapper(
                             chatId,

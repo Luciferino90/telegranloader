@@ -6,7 +6,7 @@ import it.usuratonkachi.telegranloader.config.TelegramCommonProperties
 import it.usuratonkachi.telegranloader.service.TdlibDatabaseCleanerService
 import lombok.extern.slf4j.Slf4j
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
 import org.telegram.telegrambots.bots.TelegramLongPollingBot
 import org.telegram.telegrambots.bots.TelegramWebhookBot
 import org.telegram.telegrambots.meta.TelegramBotsApi
@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.annotation.PostConstruct
 
 @Slf4j
-@Component
+@Service
 @ConditionalOnMissingBean(TelegramWebhookBot::class)
 class TelegramBotPolling(
     private var telegramCommonProperties: TelegramCommonProperties,

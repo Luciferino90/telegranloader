@@ -1,9 +1,9 @@
 package it.usuratonkachi.telegranloader.parser
 
 import org.springframework.boot.context.properties.ConfigurationProperties
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
 
-@Component
+@Service
 @ConfigurationProperties(prefix = "series")
 class ParserConfiguration (
         var filename: ParserMapConfiguration? = null,
@@ -16,7 +16,6 @@ class ParserMapConfiguration (
 )
 
 class ConfigurationMapper(
-    var type: String? = null,
     var filename: Element? = null,
     var season: Element? = null,
     var episode: Element? = null

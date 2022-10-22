@@ -15,7 +15,7 @@ class AnsweringBotService(private val AnsweringBot: AnsweringBot, private val cl
     }
 
     fun deleteRequest(downloadWrapper: DownloadWrapper) {
-        client.send(TdApi.DeleteMessages(downloadWrapper.chatId, longArrayOf(downloadWrapper.messageId), true), null)
+        client.send(TdApi.DeleteMessages(downloadWrapper.chatId, longArrayOf(downloadWrapper.messageId), true)) {}
         TelegramClientService.logger().debug("Delete Message Done")
     }
 

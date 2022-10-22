@@ -7,7 +7,7 @@ import it.usuratonkachi.telegranloader.api.TelegramClientService
 import it.usuratonkachi.telegranloader.config.Log
 import it.usuratonkachi.telegranloader.config.TelegramApiProperties
 import it.usuratonkachi.telegranloader.service.TdlibDatabaseCleanerService
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
@@ -16,7 +16,7 @@ import java.util.*
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 
-@Component
+@Service
 class UpdateHandler(
     private val client: TelegramClient,
     private val telegramApiProperties: TelegramApiProperties,
@@ -46,7 +46,8 @@ class UpdateHandler(
         when (authorizationState!!.constructor) {
             TdApi.AuthorizationStateWaitTdlibParameters.CONSTRUCTOR -> {
                 checkTdlibDatabase()
-                val parameters = TdApi.TdlibParameters()
+
+                val parameters = TdApi.SetTdlibParameters()
                 parameters.databaseDirectory = telegramApiProperties.databasePath
                 parameters.useMessageDatabase = true
                 parameters.useSecretChats = false
@@ -57,9 +58,9 @@ class UpdateHandler(
                 parameters.systemVersion = telegramApiProperties.systemVersion
                 parameters.applicationVersion = telegramApiProperties.appVersion
                 parameters.enableStorageOptimizer = true
-                client.send(TdApi.SetTdlibParameters(parameters), okHandler)
+                client.send(parameters, { okHandler }, { it.printStackTrace() })
             }
-            TdApi.AuthorizationStateWaitEncryptionKey.CONSTRUCTOR -> client.send(TdApi.CheckDatabaseEncryptionKey()) { okHandler }
+            //TdApi.AuthorizationStateWaitEncryptionKey.CONSTRUCTOR -> client.send(TdApi.CheckDatabaseEncryptionKey()) { okHandler }
             TdApi.AuthorizationStateWaitPhoneNumber.CONSTRUCTOR -> { client.send(TdApi.SetAuthenticationPhoneNumber(telegramApiProperties.phoneNumber, null)) { okHandler } }
             TdApi.AuthorizationStateWaitCode.CONSTRUCTOR -> {
                 val code = askAuthenticationCode()

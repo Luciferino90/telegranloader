@@ -48,16 +48,17 @@ dependencies {
 	implementation("org.jsoup:jsoup:1.15.3")
 	implementation("org.telegram:telegrambots:6.1.0")
 	implementation("org.projectlombok:lombok")
+	implementation("org.goots:jdownloader:1.1")
 	implementation("com.turn:ttorrent-core:1.5")
 	implementation("io.projectreactor:reactor-core")
 	testImplementation("org.springframework.boot:spring-boot-starter-test") {
 		exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
 	}
 	implementation(platform("it.tdlight:tdlight-java-bom:2.8.5.8"))
-	implementation("it.tdlight:tdlight-java:2.8.4.3")
-	implementation("it.tdlight:tdlight-natives-linux-amd64:4.0.275")
-	implementation("it.tdlight:tdlight-natives-linux-armhf:4.0.275")
-	implementation("it.tdlight:tdlight-natives-windows-amd64:4.0.275")
+	implementation("it.tdlight:tdlight-java:2.8.5.8")
+	implementation("it.tdlight:tdlight-natives-linux-amd64:4.0.274")
+	implementation("it.tdlight:tdlight-natives-linux-armhf:4.0.274")
+	implementation("it.tdlight:tdlight-natives-windows-amd64:4.0.274")
 }
 
 tasks.withType<Test> {
@@ -75,8 +76,8 @@ tasks.getByName<Jar>("jar") {
 	enabled = true
 }
 
-tasks.getByName<CreateStartScripts>("startScripts") {
-	mainClassName = "it.usuratonkachi.telegranloader.TelegranloaderApplicationKt"
+springBoot {
+	mainClass.set("it.usuratonkachi.telegranloader.TelegranloaderApplicationKt")
 }
 
 tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
