@@ -47,6 +47,7 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	implementation("commons-io:commons-io:2.11.0")
 	implementation("org.jsoup:jsoup:1.15.3")
+	implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.4")
 	implementation("org.telegram:telegrambots:6.1.0")
 	implementation("org.projectlombok:lombok")
 	implementation("org.goots:jdownloader:1.1")

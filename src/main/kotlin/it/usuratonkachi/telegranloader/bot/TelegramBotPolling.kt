@@ -3,11 +3,14 @@ package it.usuratonkachi.telegranloader.bot
 import it.usuratonkachi.telegranloader.config.AnsweringBot
 import it.usuratonkachi.telegranloader.config.Log
 import it.usuratonkachi.telegranloader.config.TelegramCommonProperties
+import it.usuratonkachi.telegranloader.parser.ParserRefactorConfiguration
 import it.usuratonkachi.telegranloader.service.TdlibDatabaseCleanerService
 import jakarta.annotation.PostConstruct
 import lombok.extern.slf4j.Slf4j
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.stereotype.Service
+import org.springframework.util.CollectionUtils
+import org.springframework.util.StringUtils
 import org.telegram.telegrambots.bots.TelegramLongPollingBot
 import org.telegram.telegrambots.bots.TelegramWebhookBot
 import org.telegram.telegrambots.meta.TelegramBotsApi
@@ -25,7 +28,8 @@ import java.util.concurrent.ConcurrentHashMap
 class TelegramBotPolling(
     private var telegramCommonProperties: TelegramCommonProperties,
     private var telegramBotProperties: TelegramBotProperties,
-    private var tdlibDatabaseCleanerService: TdlibDatabaseCleanerService
+    private var tdlibDatabaseCleanerService: TdlibDatabaseCleanerService,
+    private var parserRefactorConfiguration: ParserRefactorConfiguration
 ) : TelegramLongPollingBot(), AnsweringBot {
 
     companion object: Log
@@ -95,6 +99,26 @@ class TelegramBotPolling(
                 val dryRun = command.replace("/dryrun", "").trim().toBoolean()
                 telegramCommonProperties.setDryRun(dryRun)
                 answerMessage(update, "DryRun is $dryRun", true)
+            }
+            "config" -> {
+                val extraValues = command.replace("/config", "").split(" ").filter { StringUtils.hasText(it) }
+                val response : String = if (CollectionUtils.isEmpty(extraValues))
+                    parserRefactorConfiguration.getConfiguration()
+                else
+                    parserRefactorConfiguration.getConfiguration(extraValues[0])
+                answerMessage(update, response, false)
+            }
+            "add_config" -> {
+                val extraValues = command.replace("/add_config", "").split(" ")
+                val seriesName = extraValues[1].trim()
+                val input = extraValues.takeLast(extraValues.size - 2).joinToString(" ")
+                answerMessage(update, parserRefactorConfiguration.addConfiguration(seriesName, input), false)
+            }
+            "remove_config" -> {
+                val extraValues = command.replace("/remove_config", "").split(" ")
+                val seriesName = extraValues[1].trim()
+                val configNumber = extraValues[2].trim().toInt()
+                answerMessage(update, parserRefactorConfiguration.removeConfiguration(seriesName, configNumber), false)
             }
             "clean" -> tdlibDatabaseCleanerService.cleanDatabase()
         }
