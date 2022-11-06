@@ -4,6 +4,7 @@ import it.usuratonkachi.telegranloader.config.AnsweringBot
 import it.usuratonkachi.telegranloader.config.Log
 import it.usuratonkachi.telegranloader.config.TelegramCommonProperties
 import it.usuratonkachi.telegranloader.service.TdlibDatabaseCleanerService
+import jakarta.annotation.PostConstruct
 import lombok.extern.slf4j.Slf4j
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.stereotype.Service
@@ -17,7 +18,6 @@ import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession
 import java.util.concurrent.ConcurrentHashMap
-import javax.annotation.PostConstruct
 
 @Slf4j
 @Service

@@ -21,7 +21,8 @@
         </rollingPolicy>
 
         <encoder>
-            <pattern>%d %p %c{1.} [%t] %m%n</pattern>
+            <pattern>%d %p %c{1} [%t] %m%n</pattern>
+            <!--<pattern>%d %p %c{1.} [%t] %m%n</pattern>-->
         </encoder>
     </appender>
 

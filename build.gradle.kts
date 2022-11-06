@@ -1,21 +1,19 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-	id("org.springframework.boot") version "2.7.5"
-	id("io.spring.dependency-management") version "1.0.13.RELEASE"
-	kotlin("jvm") version "1.7.10"
-	kotlin("plugin.spring") version "1.7.10"
+	id("org.springframework.boot") version "3.0.0-RC1"
+	id("io.spring.dependency-management") version "1.1.0"
+	kotlin("jvm") version "1.7.20"
+	kotlin("plugin.spring") version "1.7.20"
 }
 
 apply(plugin = "io.spring.dependency-management")
 apply(plugin = "kotlin")
 apply(plugin = "application")
 
-
-
 group = "it.usuratonkachi"
-version = "2.0.3"
-java.sourceCompatibility = JavaVersion.VERSION_16
+version = "2.0.4"
+java.sourceCompatibility = JavaVersion.VERSION_17
 
 repositories {
 	mavenCentral()
@@ -28,6 +26,9 @@ repositories {
 	maven {
 		url = uri("https://mvn.mchv.eu/repository/mchv/")
 	}
+	maven {
+		url = uri("https://repo.spring.io/milestone")
+	}
 }
 
 buildscript {
@@ -35,7 +36,7 @@ buildscript {
 		mavenCentral()
 	}
 	dependencies {
-		classpath("org.springframework.boot:spring-boot-gradle-plugin:2.6.6")
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:3.0.0-RC1")
 	}
 }
 
@@ -68,7 +69,7 @@ tasks.withType<Test> {
 tasks.withType<KotlinCompile> {
 	kotlinOptions {
 		freeCompilerArgs = listOf("-Xjsr305=strict")
-		jvmTarget = "16"
+		jvmTarget = "17"
 	}
 }
 

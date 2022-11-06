@@ -1,28 +1,24 @@
 package it.usuratonkachi.telegranloader.parser
 
-import lombok.RequiredArgsConstructor
 import org.springframework.boot.context.properties.ConfigurationProperties
-import org.springframework.boot.context.properties.ConstructorBinding
 import org.springframework.context.annotation.Configuration
-import org.springframework.stereotype.Component
 import java.nio.file.Path
-import java.util.Date
+import java.util.*
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
 @Configuration
-@RequiredArgsConstructor
 @ConfigurationProperties(prefix = "parser")
 class NewParserConfiguration (
-    val regexMap: Map<String, NewConfigurationMapper>
+    var regexMap: Map<String, NewConfigurationMapper> = HashMap()
 )
 
-@ConstructorBinding
-class NewConfigurationMapper(
-    val type: String,
-    val title: String,
-    val season: RegexConfig,
-    val episode: RegexConfig
+// @ConstructorBinding
+data class NewConfigurationMapper(
+    var type: String = "",
+    var title: String = "",
+    var season: RegexConfig = RegexConfig(),
+    var episode: RegexConfig = RegexConfig()
 ) {
     fun calcolateFileName(rootPath: String, fullName: String) : Path {
         val extension = fullName.split(".").last()
@@ -37,8 +33,8 @@ class NewConfigurationMapper(
     }
 }
 
-@ConstructorBinding
+// @ConstructorBinding
 class RegexConfig(
-    val regex: String,
-    val replace: String
+    var regex: String = "",
+    var replace: String = ""
 )
