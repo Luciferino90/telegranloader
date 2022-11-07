@@ -45,26 +45,61 @@ data class ParserRefactorConfiguration (
         return jsonMapper.writeValueAsString(titles.getOrDefault(series, SeriesWrapper()))
     }
 
+    fun setType(series: String, type: String) : String {
+        var hasChanges = false
+        if (titles.containsKey(series)) {
+            titles.compute(series) { key: String, oldVal: SeriesWrapper? ->
+                val returnValue: SeriesWrapper =
+                    if (!CollectionUtils.isEmpty(oldVal?.rules)) oldVal!! else SeriesWrapper()
+                returnValue.type = type
+                hasChanges = true
+                returnValue
+            }
+            if (hasChanges) swapFile()
+        }
+        return getConfiguration(series)
+    }
+
+    fun setChatUsername(series: String, chatUsername: String) : String {
+        var hasChanges = false
+        if (titles.containsKey(series)) {
+            titles.compute(series) { key: String, oldVal: SeriesWrapper? ->
+                val returnValue: SeriesWrapper =
+                    if (!CollectionUtils.isEmpty(oldVal?.rules)) oldVal!! else SeriesWrapper()
+                returnValue.chatUsername = chatUsername
+                hasChanges = true
+                returnValue
+            }
+            if (hasChanges) swapFile()
+        }
+        return getConfiguration(series)
+    }
+
     fun removeConfiguration(series : String, number : Int) : String {
+        var hasChanges = false
         if (titles.containsKey(series) && titles[series]?.rules?.size!! > number) {
             val response : RulesMapper = titles[series]!!.rules[number]
             titles[series]?.rules?.removeAt(number)
-            if (CollectionUtils.isEmpty(titles[series]?.rules))
+            if (CollectionUtils.isEmpty(titles[series]?.rules)) {
                 titles.remove(series)
-            swapFile()
+                hasChanges = true
+            }
+            if (hasChanges) swapFile()
             return "Removed: " + jsonMapper.writeValueAsString(response)
         }
         return "Configuration not found"
     }
 
     fun addConfiguration(series : String, input: String) : String {
+        var hasChanges = false
         val newRegexMapper : RulesMapper = jsonMapper.readValue(input, RulesMapper::class.java)
         titles.compute(series) { key: String, oldVal: SeriesWrapper? ->
             val returnValue : SeriesWrapper = if (!CollectionUtils.isEmpty(oldVal?.rules)) oldVal!! else SeriesWrapper()
             returnValue.rules.add(newRegexMapper)
+            hasChanges = true
             returnValue
         }
-        swapFile()
+        if (hasChanges) swapFile()
         return getConfiguration(series)
     }
 

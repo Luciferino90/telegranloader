@@ -2,7 +2,7 @@ parser-configuration:
   filename: classpath:${spring.config.import}
   titles:
     "BokuNoHeroAcademia":
-      chatUsername: ""
+      chatUsername: "myheroIT"
       type: anime
       rules:
         - regex: "^Boku No Hero Academia [0-9]+Th Season - [0-9]{2}.[a-zA-Z0-9]+"

@@ -108,17 +108,33 @@ class TelegramBotPolling(
                     parserRefactorConfiguration.getConfiguration(extraValues[0])
                 answerMessage(update, response, false)
             }
-            "add_config" -> {
-                val extraValues = command.replace("/add_config", "").split(" ")
+            "add_regex" -> {
+                val extraValues = command.replace("/add_regex", "").split(" ")
                 val seriesName = extraValues[1].trim()
                 val input = extraValues.takeLast(extraValues.size - 2).joinToString(" ")
-                answerMessage(update, parserRefactorConfiguration.addConfiguration(seriesName, input), false)
+                val response: String = parserRefactorConfiguration.addConfiguration(seriesName, input)
+                answerMessage(update, response, false)
             }
-            "remove_config" -> {
-                val extraValues = command.replace("/remove_config", "").split(" ")
+            "remove_regex" -> {
+                val extraValues = command.replace("/remove_regex", "").split(" ")
                 val seriesName = extraValues[1].trim()
                 val configNumber = extraValues[2].trim().toInt()
-                answerMessage(update, parserRefactorConfiguration.removeConfiguration(seriesName, configNumber), false)
+                val response: String = parserRefactorConfiguration.removeConfiguration(seriesName, configNumber)
+                answerMessage(update, response, false)
+            }
+            "set_user_id" -> {
+                val extraValues = command.replace("/set_user_id", "").split(" ")
+                val seriesName = extraValues[1].trim()
+                val telegramUserId = extraValues[2].trim()
+                val response: String = parserRefactorConfiguration.setChatUsername(seriesName, telegramUserId)
+                answerMessage(update, response, false)
+            }
+            "set_type" -> {
+                val extraValues = command.replace("/set_type", "").split(" ")
+                val seriesName = extraValues[1].trim()
+                val type = extraValues[2].trim().trim()
+                val response: String = parserRefactorConfiguration.setType(seriesName, type)
+                answerMessage(update, response, false)
             }
             "clean" -> tdlibDatabaseCleanerService.cleanDatabase()
         }
