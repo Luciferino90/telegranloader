@@ -24,7 +24,7 @@ import kotlin.io.path.pathString
 @ConfigurationProperties(prefix = "parser-configuration")
 data class ParserRefactorConfiguration (
     var filename: String = "",
-    var titles: ConcurrentHashMap<String, ArrayList<RegexMapper>> = ConcurrentHashMap(),
+    var titles: ConcurrentHashMap<String, SeriesWrapper> = ConcurrentHashMap(),
     val jsonMapper : ObjectMapper = ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT),
     val yamlMapper : ObjectMapper = ObjectMapper(YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER))
 ) {
@@ -42,14 +42,14 @@ data class ParserRefactorConfiguration (
     }
 
     fun getConfiguration(series : String) : String {
-        return jsonMapper.writeValueAsString(titles.getOrDefault(series, ArrayList()))
+        return jsonMapper.writeValueAsString(titles.getOrDefault(series, SeriesWrapper()))
     }
 
     fun removeConfiguration(series : String, number : Int) : String {
-        if (titles.containsKey(series) && titles[series]?.size!! > number) {
-            val response : RegexMapper = titles[series]!![number]
-            titles[series]?.removeAt(number)
-            if (CollectionUtils.isEmpty(titles[series]))
+        if (titles.containsKey(series) && titles[series]?.rules?.size!! > number) {
+            val response : RulesMapper = titles[series]!!.rules[number]
+            titles[series]?.rules?.removeAt(number)
+            if (CollectionUtils.isEmpty(titles[series]?.rules))
                 titles.remove(series)
             swapFile()
             return "Removed: " + jsonMapper.writeValueAsString(response)
@@ -58,10 +58,10 @@ data class ParserRefactorConfiguration (
     }
 
     fun addConfiguration(series : String, input: String) : String {
-        val newRegexMapper : RegexMapper = jsonMapper.readValue(input, RegexMapper::class.java)
-        titles.compute(series) { key: String, oldVal: ArrayList<RegexMapper>? ->
-            val returnValue : ArrayList<RegexMapper> = if (!CollectionUtils.isEmpty(oldVal)) oldVal!! else ArrayList()
-            returnValue.add(newRegexMapper)
+        val newRegexMapper : RulesMapper = jsonMapper.readValue(input, RulesMapper::class.java)
+        titles.compute(series) { key: String, oldVal: SeriesWrapper? ->
+            val returnValue : SeriesWrapper = if (!CollectionUtils.isEmpty(oldVal?.rules)) oldVal!! else SeriesWrapper()
+            returnValue.rules.add(newRegexMapper)
             returnValue
         }
         swapFile()
@@ -82,23 +82,28 @@ data class ParserRefactorConfiguration (
         originalFilePath.deleteIfExists()
         yamlMapper.writeValue(originalFilePath.toFile(), ParserConfigurationOutput(filename, titles))
         swapFilePath.deleteIfExists()
-        println()
     }
 
 }
 
-class RegexMapper(
-    var regex: Regex = Regex(""),
+class SeriesWrapper(
+    var title: String = "",
     var type: String = "",
+    var chatUsername: String = "",
+    var rules: ArrayList<RulesMapper> = ArrayList()
+)
+
+class RulesMapper(
+    var regex: Regex = Regex(""),
     var filename: ElementRefactor = ElementRefactor(),
     var season: ElementRefactor = ElementRefactor(),
     var episode: ElementRefactor = ElementRefactor()
 ) {
-    fun calcolateFileName(rootPath: String, fullName: String, title: String) : Path {
+    fun calcolateFileName(rootPath: String, seriesWrapper: SeriesWrapper, fullName: String) : Path {
         val extension = fullName.split(".").last()
         val seasonNumber = (season.regex.toRegex().find(fullName)?.groupValues?.firstOrNull() ?: "___").replace(season.replace, "")
         val episodeNumber = String.format("%1$2s", (episode.regex.toRegex().find(fullName)?.groupValues?.firstOrNull() ?: "___").replace(episode.replace, "")).replace(' ', '0')
-        var path = Path.of(rootPath, type, title, "Season%s".format(seasonNumber), "%s %sx%s.%s".format(title, seasonNumber, episodeNumber, extension))
+        var path = Path.of(rootPath, seriesWrapper.type, seriesWrapper.title, "Season%s".format(seasonNumber), "%s %sx%s.%s".format(seriesWrapper.title, seasonNumber, episodeNumber, extension))
         val originalChoosenPath = path
         while (path.exists()) {
             path = Path.of(originalChoosenPath.pathString.replace(extension, String.format("%s.%s", Date().time, extension)))
@@ -140,5 +145,5 @@ class ElementRefactor(
 
 data class ParserConfigurationOutput (
     val filename: String,
-    val titles: ConcurrentHashMap<String, ArrayList<RegexMapper>>
+    val titles: ConcurrentHashMap<String, SeriesWrapper>
 ) : Serializable

@@ -1,9 +1,9 @@
 package it.usuratonkachi.telegranloader.wrapper
 
 import it.tdlight.jni.TdApi
+import it.usuratonkachi.telegranloader.api.UserData
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicInteger
 
 class DownloadWrapper(
     val chatId: Long,
@@ -18,6 +18,7 @@ class DownloadWrapper(
     val downloadType: DownloadType,
     var outputPath: Path?,
     var mimeType: String?,
+    val forwardedUserData: UserData?,
     val countDownLatch: CountDownLatch = CountDownLatch(1)
 )
 

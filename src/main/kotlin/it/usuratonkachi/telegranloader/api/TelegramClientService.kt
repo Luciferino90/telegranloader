@@ -21,7 +21,8 @@ import java.time.Duration
 @Service
 class TelegramClientService(
     private val telegramCommonProperties: TelegramCommonProperties,
-    private val downloaderSelector: DownloaderSelector
+    private val downloaderSelector: DownloaderSelector,
+    private val telegramUserInfoService: TelegramUserInfoService
 ) {
 
     companion object : Log
@@ -46,34 +47,9 @@ class TelegramClientService(
         .subscribeOn(Schedulers.boundedElastic())
         .subscribe()
 
-    /*fun onShortMessage(client: TelegramClient, message: TLUpdateShortMessage) {
-        if (telegramCommonProperties.owners.contains(message.userId)
-            && (message.message.startsWith("http://")
-                    || message.message.startsWith("https://")
-                    || message.message.startsWith("magnet:")
-                    || message.message.startsWith("www.")
-                    )
-        )
-            messageQueue.add(MessageWrapper(messageString = message.message, client = client))
-    }*/
-
-    // TODO
-    // Episode: (((updates.updates[0] as TLUpdateNewMessage).message as TLMessage).media as TLMessageMediaDocument).caption
-    // Series:
-
-    /*fun onUpdates(client: TelegramClient, updates: TLUpdates) {
-        Flux.fromStream(updates.updates.stream())
-            .filter { it is TLUpdateNewMessage }
-            .map { it as TLUpdateNewMessage }
-            .map { it.message as TLMessage }
-            .filter { telegramCommonProperties.owners.contains(it.fromId) }
-            .map { MessageWrapper(message = it, client = client, episode = (it.media as TLMessageMediaDocument).caption) }
-            .doOnNext { messageQueue.add(it) }
-            .subscribe()
-    }*/
-
     fun onUpdates(updates: TdApi.UpdateNewMessage) {
         Mono.just(updates)
+            .subscribeOn(Schedulers.boundedElastic())
             .filter{ telegramCommonProperties.owners.contains(it.message.chatId.toString()) }
             .map {
                 val message: TdApi.Message = it.message
@@ -81,7 +57,10 @@ class TelegramClientService(
                 val messageId: Long = message.id
                 val date: Int = message.forwardInfo?.date ?: message.date
                 val content : TdApi.MessageContent = message.content
-
+                val userData : UserData? = if (message.forwardInfo.origin is TdApi.MessageForwardOriginChannel)
+                    telegramUserInfoService.getChat((message.forwardInfo.origin as TdApi.MessageForwardOriginChannel).chatId)
+                else
+                    null
                 when (content) {
                     is TdApi.MessageVideo -> {
                         val video : TdApi.MessageVideo = message.content as TdApi.MessageVideo
@@ -101,7 +80,8 @@ class TelegramClientService(
                             "",
                             DownloadType.FILE,
                             null,
-                            null
+                            null,
+                            userData
                         )
                     }
                     is TdApi.MessageDocument -> {
@@ -117,7 +97,8 @@ class TelegramClientService(
                             content.document.fileName,
                             DownloadType.FILE,
                             null,
-                            content.document.mimeType
+                            content.document.mimeType,
+                            userData
                         )
                     }
                     is TdApi.MessageText -> {
@@ -135,7 +116,8 @@ class TelegramClientService(
                             content.webPage?.url ?: text,
                             DownloadType.URL,
                             null,
-                            content.webPage?.document?.mimeType
+                            content.webPage?.document?.mimeType,
+                            userData
                         )
                     }
                     else -> {
@@ -151,7 +133,8 @@ class TelegramClientService(
                             "",
                             DownloadType.URL,
                             null,
-                            ""
+                            "",
+                            userData
                         )
                     }
                 }
