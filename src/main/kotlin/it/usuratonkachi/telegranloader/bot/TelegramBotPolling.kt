@@ -9,7 +9,6 @@ import jakarta.annotation.PostConstruct
 import lombok.extern.slf4j.Slf4j
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.stereotype.Service
-import org.springframework.util.CollectionUtils
 import org.springframework.util.StringUtils
 import org.telegram.telegrambots.bots.TelegramLongPollingBot
 import org.telegram.telegrambots.bots.TelegramWebhookBot
@@ -20,6 +19,7 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage
 import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 @Slf4j
@@ -29,6 +29,7 @@ class TelegramBotPolling(
     private var telegramCommonProperties: TelegramCommonProperties,
     private var telegramBotProperties: TelegramBotProperties,
     private var tdlibDatabaseCleanerService: TdlibDatabaseCleanerService,
+    private var keyboardService: KeyboardService,
     private var parserRefactorConfiguration: ParserRefactorConfiguration
 ) : TelegramLongPollingBot(), AnsweringBot {
 
@@ -53,13 +54,34 @@ class TelegramBotPolling(
 
     override fun onUpdateReceived(update: Update?) {
         update?.let {
-            it.takeIf { telegramCommonProperties.owners.contains(it.message.from.id.toString()) }
+            it.takeIf {
+                (
+                        if (update.hasCallbackQuery())
+                            Optional.ofNullable(it)
+                                .map { update -> update.callbackQuery }
+                                .map { callbackQuery -> callbackQuery.from }
+                                .map { from -> from.id }
+                                .map { userId -> userId.toString() }
+                        else
+                            Optional.ofNullable(it)
+                                .map { update -> update.message }
+                                .map { message -> message.from }
+                                .map { user -> user.id }
+                                .map { userId -> userId.toString() }
+                        )
+                    .filter { userId -> telegramCommonProperties.owners.contains(userId) }
+                    .isPresent
+            }
                 ?.apply { dispatcherMessage(this) }
         }
     }
 
     private fun dispatcherMessage(update: Update) = run {
-        if (update.message.text != null && update.message.text.startsWith("/")) botCommand(update) else clientCommand(update)
+        if (update.hasCallbackQuery())
+            botKeyboard(update)
+        else if (Optional.ofNullable(update).map { it.message }.map { it.text }.filter { StringUtils.hasText(it) }.filter { it.startsWith("/") }.isPresent)
+            botCommand(update)
+        else clientCommand(update)
     }
 
     private fun forwardMessage(chatId: Long, fromChatId: Long, messageId: Int) {
@@ -89,6 +111,22 @@ class TelegramBotPolling(
         sendResponse.replyToMessageId = update.message.messageId
         execute(sendResponse)
         if (remove) deleteMessage(update.message.chatId.toString(), update.message.messageId)
+    }
+
+    fun openKeyboard(update: Update, response: KeyboardResponse?){
+        val chatId: String
+        val replyToMessageId : Int
+        if (update.hasCallbackQuery()) {
+            chatId = update.callbackQuery.message.chatId.toString()
+            replyToMessageId = update.callbackQuery.message.replyToMessage.messageId
+        } else {
+            chatId = update.message.chatId.toString()
+            replyToMessageId = update.message.messageId
+        }
+        val sendResponse = SendMessage(chatId, response?.response ?: "")
+        sendResponse.replyToMessageId = replyToMessageId
+        sendResponse.replyMarkup = response?.keyboard
+        execute(sendResponse)
     }
 
     fun botCommand(update: Update) {
@@ -124,8 +162,8 @@ class TelegramBotPolling(
                 val response: String = parserRefactorConfiguration.removeConfiguration(seriesName, configNumber)
                 answerMessage(update, response, false)
             }
-            "set_user_id" -> {
-                val extraValues = command.replace("/set_user_id", "").split(" ")
+            "set_userid" -> {
+                val extraValues = command.replace("/set_userid", "").split(" ")
                 val seriesName = extraValues[1].trim()
                 val telegramUserId = extraValues[2].trim()
                 val response: String = parserRefactorConfiguration.setChatUsername(seriesName, telegramUserId)
@@ -140,18 +178,19 @@ class TelegramBotPolling(
             }
             "clean" -> tdlibDatabaseCleanerService.cleanDatabase()
             "help" -> {
-                val response = """
-                    /dryrun true|false: On true bot will return a preview of the parser filename, with false it will try to download the content.
-                    /config [title] [counter]: Return parsing config file.
-                    /add_rule title rule: Add rule for a title, for rule format look at config command.
-                    /remove_rule title counter: Remove rule using counter. If not sure use /config file, changes are not revertible.
-                    /set_user_id title telegram_user_id: Configure a series by a specific userId.
-                    /set_type title type: Configure type for series, used for output path.
-                    /clean: Cleans telegram metadata.
-                    /help: Print this help menu.
-                """.trimIndent()
+                val response = keyboardService.helpResponse
+                answerMessage(update, response, false)
+            }
+            else -> {
+                val keyboardMarkup = keyboardService.buildKeyBoard()
+                openKeyboard(update, keyboardMarkup)
             }
         }
+    }
+
+    fun botKeyboard(update: Update) {
+        val keyboardMarkup = keyboardService.buildKeyBoard(update.callbackQuery)
+        openKeyboard(update, keyboardMarkup)
     }
 
     fun clientCommand(update: Update) {
