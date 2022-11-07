@@ -102,21 +102,23 @@ class TelegramBotPolling(
             }
             "config" -> {
                 val extraValues = command.replace("/config", "").split(" ").filter { StringUtils.hasText(it) }
-                val response : String = if (CollectionUtils.isEmpty(extraValues))
-                    parserRefactorConfiguration.getConfiguration()
-                else
-                    parserRefactorConfiguration.getConfiguration(extraValues[0])
+                val response : String = when(extraValues.size) {
+                    0 -> parserRefactorConfiguration.getConfiguration()
+                    1 -> parserRefactorConfiguration.getConfiguration(extraValues[0].trim())
+                    2 -> parserRefactorConfiguration.getConfiguration(extraValues[0].trim(), extraValues[1].trim().toInt())
+                    else -> "Input error, please look at /help"
+                }
                 answerMessage(update, response, false)
             }
-            "add_regex" -> {
-                val extraValues = command.replace("/add_regex", "").split(" ")
+            "add_rule" -> {
+                val extraValues = command.replace("/add_rule", "").split(" ")
                 val seriesName = extraValues[1].trim()
                 val input = extraValues.takeLast(extraValues.size - 2).joinToString(" ")
                 val response: String = parserRefactorConfiguration.addConfiguration(seriesName, input)
                 answerMessage(update, response, false)
             }
-            "remove_regex" -> {
-                val extraValues = command.replace("/remove_regex", "").split(" ")
+            "remove_rule" -> {
+                val extraValues = command.replace("/remove_rule", "").split(" ")
                 val seriesName = extraValues[1].trim()
                 val configNumber = extraValues[2].trim().toInt()
                 val response: String = parserRefactorConfiguration.removeConfiguration(seriesName, configNumber)
@@ -137,6 +139,18 @@ class TelegramBotPolling(
                 answerMessage(update, response, false)
             }
             "clean" -> tdlibDatabaseCleanerService.cleanDatabase()
+            "help" -> {
+                val response = """
+                    /dryrun true|false: On true bot will return a preview of the parser filename, with false it will try to download the content.
+                    /config [title] [counter]: Return parsing config file.
+                    /add_rule title rule: Add rule for a title, for rule format look at config command.
+                    /remove_rule title counter: Remove rule using counter. If not sure use /config file, changes are not revertible.
+                    /set_user_id title telegram_user_id: Configure a series by a specific userId.
+                    /set_type title type: Configure type for series, used for output path.
+                    /clean: Cleans telegram metadata.
+                    /help: Print this help menu.
+                """.trimIndent()
+            }
         }
     }
 

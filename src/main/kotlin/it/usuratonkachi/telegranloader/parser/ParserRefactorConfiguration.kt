@@ -45,6 +45,10 @@ data class ParserRefactorConfiguration (
         return jsonMapper.writeValueAsString(titles.getOrDefault(series, SeriesWrapper()))
     }
 
+    fun getConfiguration(series : String, counter: Int) : String {
+        return jsonMapper.writeValueAsString(titles.getOrDefault(series, SeriesWrapper()).rules.getOrElse(counter) {RulesMapper()} )
+    }
+
     fun setType(series: String, type: String) : String {
         var hasChanges = false
         if (titles.containsKey(series)) {
